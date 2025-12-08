@@ -311,6 +311,58 @@ function M.setup(opts)
     vim.notify("AI Diagnostics: Warning - API key not set", vim.log.levels.WARN)
   end
   
+  -- Set up custom highlight for AI diagnostics (purple)
+  vim.cmd([[
+    highlight DiagnosticSignAI guifg=#9d7cd8 ctermfg=141
+    highlight DiagnosticVirtualTextAI guifg=#9d7cd8 ctermfg=141
+  ]])
+  
+  -- Define custom signs with "AI" text
+  vim.fn.sign_define("DiagnosticSignAIError", {
+    text = "AI",
+    texthl = "DiagnosticSignAI",
+    numhl = "DiagnosticSignAI"
+  })
+  vim.fn.sign_define("DiagnosticSignAIWarn", {
+    text = "AI",
+    texthl = "DiagnosticSignAI",
+    numhl = "DiagnosticSignAI"
+  })
+  vim.fn.sign_define("DiagnosticSignAIInfo", {
+    text = "AI",
+    texthl = "DiagnosticSignAI",
+    numhl = "DiagnosticSignAI"
+  })
+  vim.fn.sign_define("DiagnosticSignAIHint", {
+    text = "AI",
+    texthl = "DiagnosticSignAI",
+    numhl = "DiagnosticSignAI"
+  })
+  
+  -- Configure diagnostics to use our custom signs
+  vim.diagnostic.config({
+    signs = {
+      text = {
+        [vim.diagnostic.severity.ERROR] = "AI",
+        [vim.diagnostic.severity.WARN] = "AI",
+        [vim.diagnostic.severity.INFO] = "AI",
+        [vim.diagnostic.severity.HINT] = "AI",
+      },
+      texthl = {
+        [vim.diagnostic.severity.ERROR] = "DiagnosticSignAI",
+        [vim.diagnostic.severity.WARN] = "DiagnosticSignAI",
+        [vim.diagnostic.severity.INFO] = "DiagnosticSignAI",
+        [vim.diagnostic.severity.HINT] = "DiagnosticSignAI",
+      },
+      numhl = {
+        [vim.diagnostic.severity.ERROR] = "DiagnosticSignAI",
+        [vim.diagnostic.severity.WARN] = "DiagnosticSignAI",
+        [vim.diagnostic.severity.INFO] = "DiagnosticSignAI",
+        [vim.diagnostic.severity.HINT] = "DiagnosticSignAI",
+      }
+    }
+  }, ns_id)
+  
   local group = api.nvim_create_augroup("AIDiagnostics", {clear = true})
   
   api.nvim_create_autocmd("BufWritePost", {
