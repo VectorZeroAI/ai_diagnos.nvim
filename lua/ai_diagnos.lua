@@ -105,11 +105,15 @@ local function async_http_post(url, headers, body, callback)
     "-d", body
   }, header_args)
   
-  local handle, pid
-  handle, pid = uv.spawn("curl", {
+  local stdout = uv.new_pipe(false)
+  local stderr = uv.new_pipe(false)
+  
+  local handle, pid = uv.spawn("curl", {
     args = args,
-    stdio = {nil, uv.new_pipe(false), uv.new_pipe(false)}
+    stdio = {nil, stdout, stderr}
   }, function(code, signal)
+    if stdout then stdout:close() end
+    if stderr then stderr:close() end
     vim.schedule(function()
       if code == 0 then
         local response = table.concat(stdout_chunks)
@@ -122,17 +126,19 @@ local function async_http_post(url, headers, body, callback)
   end)
   
   if not handle then
-    callback("Failed to spawn curl process", nil)
+    if stdout then stdout:close() end
+    if stderr then stderr:close() end
+    callback("Failed to spawn curl process (curl not found?)", nil)
     return nil
   end
   
-  uv.read_start(handle.stdio[2], function(err, data)
+  uv.read_start(stdout, function(err, data)
     if data then
       table.insert(stdout_chunks, data)
     end
   end)
   
-  uv.read_start(handle.stdio[3], function(err, data)
+  uv.read_start(stderr, function(err, data)
     if data then
       table.insert(stderr_chunks, data)
     end
