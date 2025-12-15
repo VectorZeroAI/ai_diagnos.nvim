@@ -12,7 +12,7 @@ with lazy.nivm:
 ~~~lua
 
 {
-    "your-username/ai-diagnostics.nvim",
+    "VectorZeroAI/ai_diagnos.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
         require("ai-diagnostics").setup({
