@@ -1,9 +1,6 @@
 # ai_diagnos.nvim
 Neovim plugin that adds AI diagnostics to neovim. 
 
-# ai_diagnos.nvim
-Neovim plugin that adds AI diagnostics to neovim.
-
 # Usage
 
 To activate the plugin, use the following:
