@@ -36,3 +36,40 @@ with lazy.nivm:
 2. AIClear --> clears all the AI diagnostics
 3. AIAnalyse --> forces rediagnosing the file.
 4. AIStatus --> Outputs status
+
+# Architecture
+(The new)
+ai_diagnos.lua is the file responsible for calling python LSP .
+AI_LSP.py is the python based AI LSP, wich does the actual AI stuff. 
+
+AI_LSP.py will use Langhchain with Openrouter API for the actual analysis and diagnostics. 
+ai_diagnos.lua is the lua file responsible for providing tasks and context to the AI_LSP 
+
+## ai_diagnos.lua architecture
+I dont know yet myself. 
+> [!NOTE]
+> Each one of the analysers methods are exposed as Editor Commands and can be called manually or via autocmd. Autocmd is also the recommended way to do that and to configure the plugin. It exposes an option to do so automatically. 
+
+## AI_LSP.py 
+
+Composes and exposes the analysers functions, and cleanly exposes them for the lua part. 
+It does so in the same way an actual LSP would do it. 
+That also lets the projekt be expanded into a fullblown LSP. 
+So, it uses pygls and composes the LSP. 
+
+The analyser is the analyser.py file that gets functions imported from and just used. 
+
+### analyser.py
+
+analyser exposes the following analysis methods: 
+
+general_analysis
+
+logic_analysis
+
+optimisation_suggestions
+
+Each one of them is basically the same thing, but has a different prompt, and these are activated in different times. 
+> [!NOTE]
+> The lua part exposes editor commands that activate each one of those. 
+
