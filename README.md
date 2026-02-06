@@ -73,3 +73,7 @@ Each one of them is basically the same thing, but has a different prompt, and th
 > [!NOTE]
 > The lua part exposes editor commands that activate each one of those. 
 
+
+
+> [!NOTE]
+> Nothing was actually implemented yet. todo: implement
