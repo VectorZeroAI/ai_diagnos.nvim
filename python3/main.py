@@ -18,6 +18,8 @@ from pathlib import Path
 
 import re
 
+import config
+
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
     """
     Search for a pattern and return (line_number, character_position) for each match.
@@ -54,7 +56,7 @@ def init_ai():
     global DiagnosticsOutputObjekt
     Llm = ChatOpenAI(
             model="openrouter/pony-alpha",
-            api_key=SecretStr(""), 
+            api_key=SecretStr(config.OPENROUTER_API_KEY), 
             base_url="https://openrouter.ai/api/v1"
             )
     try:
