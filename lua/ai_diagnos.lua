@@ -1,11 +1,18 @@
 local M = {}
 
 -- Default configuration
-local default_config = {
-    cmd = { "python3", "-m", "ai_diagnos_lsp" }, -- Adjust this to match your LSP server command
-    filetypes = { "*" }, -- All filetypes by default
-    root_dir = nil, -- Will use vim's cwd by default
-    settings = {},
+local script_path = debug.getinfo(1, "S").source:sub(2)
+local plugin_dir = vim.fn.fnamemodify(script_path, ':h')
+local python_script = plugin_dir .. '/../python3/ai_diagnos_lsp.py'
+
+local configs = require('lspconfig.configs')
+
+configs.ai_diagnos_lsp = {
+    default_config = {
+        cmd = { 'python3', python_script },
+        filetypes = { 'python', 'go' }, 
+        root_dir = require('lspconfig').util.root_pattern('.git'),
+    },
 }
 
 -- Store the user configuration
