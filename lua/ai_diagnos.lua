@@ -15,7 +15,7 @@ function M.setup(user_config)
 
     local default_config = {
         cmd = { 'python3', python_script },
-        filetypes = { 'python', 'go' },
+        filetypes = { 'python', 'go', 'lua' },
         root_dir = require('lspconfig').util.root_pattern('.git'),
     }
     M.config = vim.deepcopy(default_config)
