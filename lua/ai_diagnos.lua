@@ -7,28 +7,25 @@ local M = {}
 function M.setup(user_config)
 
     -- Default configuration
-    script_path = debug.getinfo(1, "S").source:sub(2)
-    plugin_dir = vim.fn.fnamemodify(script_path, ':h')
-    python_script = plugin_dir .. '/../python3/ai_diagnos_lsp.py'
+    local script_path = debug.getinfo(1, "S").source:sub(2)
+    local plugin_dir = vim.fn.fnamemodify(script_path, ':h')
+    local python_script = plugin_dir .. '/../python3/ai_diagnos_lsp.py'
 
     local configs = require('lspconfig.configs')
 
-    configs.ai_diagnos_lsp = {
-        default_config = {
-            cmd = { 'python3', python_script },
-            filetypes = { 'python', 'go' }, 
-            root_dir = require('lspconfig').util.root_pattern('.git'),
-        },
+    local default_config = {
+        cmd = { 'python3', python_script },
+        filetypes = { 'python', 'go' },
+        root_dir = require('lspconfig').util.root_pattern('.git'),
     }
-    M.config = vim.deepcopy(configs.ai_diagnos_lsp.default_config)
+    M.config = vim.deepcopy(default_config)
     print("user_config:", vim.inspect(user_config))
-    print("default_config:", vim.inspect(configs.ai_diagnos_lsp.default_config))
+    print("default_config:", vim.inspect(default_config))
     -- rest of code
-    M.config = vim.tbl_deep_extend("force", configs.ai_diagnos_lsp.default_config, user_config)
+    M.config = vim.tbl_deep_extend("force", default_config, user_config)
     
     -- Register the LSP server configuration
     local lspconfig = require("lspconfig")
-    local configs = require("lspconfig.configs")
     
     -- Define the server if not already defined
     if not configs.ai_diagnos then
