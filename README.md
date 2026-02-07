@@ -73,3 +73,8 @@ Each one of them is basically the same thing, but has a different prompt, and th
 > [!NOTE]
 > The lua part exposes editor commands that activate each one of those. 
 
+
+# Contributing 
+
+Any contribution in any form is welcomed. 
+It may take a while for me to actually merge a PR, but I am still the maintainer and am still working on this. Not actively though, as I am genuenly bad at lua. 

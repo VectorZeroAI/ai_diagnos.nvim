@@ -1,0 +1,11 @@
+[project]
+name = "AI_LSP"
+version = "0.1.0"
+description = "An LSP with langchain + openrouter API as its backend. "
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain>=1.2.9",
+    "langchain-openai>=1.1.7",
+    "pygls>=2.0.1",
+]
