@@ -136,11 +136,17 @@ class AI_diagnos_lsp(LanguageServer):
             self.diagnostics[document.uri] = (document.version, diagnostics)
 
 
-server = AI_diagnos_lsp('ai_diagnos', "v0.1")
+server = AI_diagnos_lsp('ai_diagnos', "v0.1 / DEV")
 
 @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
 def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
-    """ Parse each document when it is opened """
+    """ Diagnose each document when it is opened """
+    doc = ls.workspace.get_text_document(params.text_document.uri)
+    ls.parse(doc)
+
+@server.feature(types.TEXT_DOCUMENT_DID_SAVE)
+def did_save(ls: AI_diagnos_lsp, params: types.DidSaveTextDocumentParams):
+    """ Diagnose each document when it is saved, e.g. on save. As was done by the previous version of the plugin """
     doc = ls.workspace.get_text_document(params.text_document.uri)
     ls.parse(doc)
 
