@@ -63,7 +63,7 @@ def init_ai():
         with open(f"{Path(__file__).absolute().resolve().parent}/general_analysis_system_prompt.txt", "r") as f:
             GENERAL_ANALYSIS_SYSTEM_PROMPT = f.read()
     except FileNotFoundError as e:
-        raise NotImplementedError("The prompt file is missing. Go write it") from e    # FIXME : Write the prompt file
+        raise NotImplementedError("The prompt file is missing. Go write it") from e
     GeneralAnalysisPrompt = ChatPromptTemplate.from_messages([
             ("system", f"{GENERAL_ANALYSIS_SYSTEM_PROMPT}"),
             ("human", "\n{file_content}\n\n"),
@@ -86,9 +86,9 @@ def init_ai():
                 # TODO : implement the citation to line and colum transformation
                 
 
-            range: Location
-            message: str
-            severity: Severity
+            location: Location
+            error_message: str
+            severity_level: Severity
             # TODO : Double check if this is enough
             class Config:
                 populate_by_name = True
