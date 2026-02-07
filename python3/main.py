@@ -123,8 +123,8 @@ class AI_diagnos_lsp(LanguageServer):
                 continue 
             diagnostics.append(
                     types.Diagnostic(
-                        message=i.message,
-                        severity=i.severity,
+                        message=i.error_message,
+                        severity=i.severity_level.value,
                         range=types.Range(
                             start=types.Position(pos_line, pos_char),
                             end=types.Position(pos_line, pos_char)
@@ -136,7 +136,7 @@ class AI_diagnos_lsp(LanguageServer):
             self.diagnostics[document.uri] = (document.version, diagnostics)
 
 
-server = AI_diagnos_lsp('ai_diagnos', "v0.1 / DEV")
+server = AI_diagnos_lsp('ai_diagnos', "v0.1 DEV")
 
 @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
 def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
