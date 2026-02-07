@@ -78,3 +78,6 @@ Each one of them is basically the same thing, but has a different prompt, and th
 
 Any contribution in any form is welcomed. 
 It may take a while for me to actually merge a PR, but I am still the maintainer and am still working on this. Not actively though, as I am genuenly bad at lua. 
+
+> [!NOTE]
+> Nothing was actually implemented yet. todo: implement
