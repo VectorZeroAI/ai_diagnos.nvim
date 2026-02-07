@@ -21,7 +21,7 @@ M.config = vim.deepcopy(default_config)
 -- Setup function called by users in their config
 function M.setup(user_config)
     user_config = user_config or {}
-    M.config = vim.tbl_deep_extend("force", default_config, user_config)
+    M.config = vim.tbl_deep_extend("force", configs.ai_diagnos_lsp.default_config, user_config)
     
     -- Register the LSP server configuration
     local lspconfig = require("lspconfig")
