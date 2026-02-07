@@ -19,8 +19,6 @@ function M.setup(user_config)
         root_dir = require('lspconfig').util.root_pattern('.git'),
     }
     M.config = vim.deepcopy(default_config)
-    print("user_config:", vim.inspect(user_config))
-    print("default_config:", vim.inspect(default_config))
     -- rest of code
     M.config = vim.tbl_deep_extend("force", default_config, user_config)
     
