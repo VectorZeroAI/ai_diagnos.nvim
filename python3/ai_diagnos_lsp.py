@@ -16,8 +16,6 @@ from pathlib import Path
 
 import re
 
-import argparse
-
 import threading
 import logging
 import os
@@ -180,28 +178,30 @@ def main():
     config = None
 
     server = AI_diagnos_lsp('ai_diagnos', "v0.2 stable")
+    
+    @server.feature(types.INITIALIZE)
+    def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
+        global config
+        params_config = types.ConfigurationParams(
+            items=[
+                types.ConfigurationItem(section="api_key")
+                # NOTE : This is a list, of items of type configuration Item, and
+                # Each of those items practically tells the editor what configuration value were looking for
+                # I assume no scope will take the global scope. 
+            ]
+        )
+
+        def callback(config):
+            global api_key
+            api_key = config[0]
+        
+        config = ls.workspace_configuration(params_config, callback)
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
         """ Diagnose each document when it is opened """
         doc = ls.workspace.get_text_document(params.text_document.uri)
         ls.parse(doc)
-        global config
-        if config is None:
-            params_config = types.ConfigurationParams(
-                items=[
-                    types.ConfigurationItem(section="api_key")
-                    # NOTE : This is a list, of items of type configuration Item, and
-                    # Each of those items practically tells the editor what configuration value were looking for
-                    # I assume no scope will take the global scope. 
-                ]
-            )
-
-            def callback(config):
-                global api_key
-                api_key = config[0]
-
-            config = ls.workspace_configuration(params_config, callback)
 
     @server.feature(types.TEXT_DOCUMENT_DID_SAVE)
     def did_save(ls: AI_diagnos_lsp, params: types.DidSaveTextDocumentParams):
