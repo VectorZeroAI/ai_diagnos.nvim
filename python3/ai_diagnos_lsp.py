@@ -88,7 +88,9 @@ def init_ai(api_key_input: str):
 
 def PingingThread():
     from time import sleep
+
     global pinging_thread_work
+
     while pinging_thread_work:
         logging.info("Lanchain is still invoking")
         sleep(1)
@@ -184,10 +186,6 @@ def main():
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.error(f"couldnt run init_ai for following reason : {e}")
             raise RuntimeError(f"couldnt run init_ai for following reason : {e}") from e
-
-
-
-
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
