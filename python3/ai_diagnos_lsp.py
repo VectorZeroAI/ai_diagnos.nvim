@@ -114,6 +114,13 @@ class AI_diagnos_lsp(LanguageServer):
         _, previous = self.diagnostics.get(document.uri, (0, []))
         diagnostics = []
 
+        severity_map = {
+                1: types.DiagnosticSeverity.Error,
+                2: types.DiagnosticSeverity.Warning,
+                3: types.DiagnosticSeverity.Information,
+                4: types.DiagnosticSeverity.Hint
+                }
+
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.info("starting the chain")
             threading.Thread(target=PingingThread, daemon=True).start()
@@ -146,10 +153,13 @@ class AI_diagnos_lsp(LanguageServer):
                 continue 
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.info(f"DIAGNOSTIC : error message:  {i.error_message} ; severity level : {i.severity_level} ; pos line : {pos_line} ; pos char :  {pos_char}")
+
+            severity_level_converted = severity_map.get(i.severity_level)
+
             diagnostics.append(
                     types.Diagnostic(
                         message=i.error_message,
-                        severity=i.severity_level,
+                        severity=severity_level_converted,
                         range=types.Range(
                             start=types.Position(pos_line, pos_char),
                             end=types.Position(pos_line, pos_char)
