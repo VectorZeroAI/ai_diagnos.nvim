@@ -156,7 +156,7 @@ class AI_diagnos_lsp(LanguageServer):
 
             diagnostics.append(
                     types.Diagnostic(
-                        message=i.error_message,
+                        message=i.error_message + "      [AI GENERATED]",
                         severity=severity_level_converted,
                         range=types.Range(
                             start=types.Position(pos_line, pos_char),
