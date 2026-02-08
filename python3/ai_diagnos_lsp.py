@@ -98,7 +98,6 @@ class AI_diagnos_lsp(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.diagnostics = {}
-        init_ai(api_key)
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.basicConfig(
                     filename="ai_diagnos_lsp.log",
@@ -173,9 +172,7 @@ class AI_diagnos_lsp(LanguageServer):
 
 
 def main():
-    global api_key
     global config
-    config = None
 
     server = AI_diagnos_lsp('ai_diagnos', "v0.2 stable")
     
@@ -196,6 +193,8 @@ def main():
             api_key = config[0]
         
         config = ls.workspace_configuration(params_config, callback)
+        global api_key
+        init_ai(api_key)
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
