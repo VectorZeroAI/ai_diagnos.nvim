@@ -177,12 +177,12 @@ def main():
     server = AI_diagnos_lsp('ai_diagnos', "v0.3 DEV")
     
     @server.feature(types.INITIALIZED)
-    def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
+    def on_startup(ls: AI_diagnos_lsp, params: types.InitializedParams):
         global _flag_callback_ran
         _flag_callback_ran = False
 
         if os.getenv("AI_DIAGNOS_LOG") is not None:
-            logging.info("INITIALIZE RAN")
+            logging.info("INITIALIZED RAN")
             logging.info(f"initialise params = {params}")
 
         global config
