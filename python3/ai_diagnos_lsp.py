@@ -3,7 +3,6 @@
 from enum import IntEnum
 from typing import List, Union, Tuple
 from pydantic import SecretStr
-from pygls.cli import start_server
 from pygls.lsp.server import LanguageServer
 from pygls.workspace import TextDocument
 
