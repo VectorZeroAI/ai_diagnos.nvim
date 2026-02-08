@@ -178,6 +178,8 @@ def main():
     
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
+        global _flag_callback_ran
+        _flag_callback_ran = False
 
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.info("INITIALIZE RAN")
@@ -226,7 +228,6 @@ def main():
             raise RuntimeError("line 201 , couldnt get the workspace configuration. ") from e
 
         global api_key
-        global _flag_callback_ran
 
         if not _flag_callback_ran:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
