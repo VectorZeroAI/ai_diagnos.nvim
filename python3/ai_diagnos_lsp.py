@@ -103,7 +103,7 @@ class AI_diagnos_lsp(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.diagnostics = {}
-        init_ai()
+        init_ai(api_key)
 
     def parse(self, document: TextDocument):
         _, previous = self.diagnostics.get(document.uri, (0, []))
@@ -135,8 +135,22 @@ class AI_diagnos_lsp(LanguageServer):
         if previous != diagnostics:
             self.diagnostics[document.uri] = (document.version, diagnostics)
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='My LSP Server')
+    parser.add_argument(
+        '--api-key',
+        type=str,
+        required=True,
+        help='API key for the Openrouter API'
+    )
+    return parser.parse_args()
+
+# Parse arguments
+args = parse_args()
+api_key = args.api_key
 
 server = AI_diagnos_lsp('ai_diagnos', "v0.1 DEV")
+
 
 @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
 def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
