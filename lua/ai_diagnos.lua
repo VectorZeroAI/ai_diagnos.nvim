@@ -17,15 +17,16 @@ function M.setup(user_config)
         settings = {},
         on_attach = nil,
         capabilities = nil,
+        init_options = {},
     }
     M.config = {
             cmd = user_config.cmd or default_config.cmd,
             filetypes = user_config.filetypes or default_config.filetypes,
             root_dir = user_config.root_dir or default_config.root_dir,
-            api_key = user_config.api_key,
             settings = user_config.settings or default_config.settings,
             on_attach = user_config.on_attach or default_config.on_attach,
             capabilities = user_config.capabilities or default_config.capabilities,
+            init_options = user_config.api_key or default_config.init_options,
         }
     -- Register the LSP server configuration
     local lspconfig = require("lspconfig")
@@ -38,7 +39,6 @@ function M.setup(user_config)
                 root_dir = M.config.root_dir,
                 settings = M.config.settings,
                 name = "ai_diagnos_lsp",
-                api_key = M.config.api_key,
             },
         }
     end
@@ -50,9 +50,8 @@ function M.setup(user_config)
         settings = M.config.settings,
         on_attach = M.config.on_attach,
         capabilities = M.config.capabilities,
-        api_key = M.config.api_key,
+        init_options = M.config.init_options,
     })
 end
 
 return M
-
