@@ -18,6 +18,11 @@ import re
 
 import argparse
 
+import threading
+import logging
+from datetime import datetime
+import os
+
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
     """
     Search for a pattern and return (line_number, character_position) for each match.
@@ -53,7 +58,7 @@ def init_ai(api_key_input: str):
     global GeneralAnalysisChain
     global DiagnosticsOutputObjekt
     Llm = ChatOpenAI(
-            model="openrouter/pony-alpha",
+            model="stepfun/step-3.5-flash:free",
             api_key=SecretStr(api_key_input), 
             base_url="https://openrouter.ai/api/v1"
             )
@@ -84,18 +89,43 @@ def init_ai(api_key_input: str):
 
     GeneralAnalysisChain = GeneralAnalysisPrompt | Llm | GeneralDiagnosticsOutputParser
 
+def PingingThread():
+    from time import sleep
+    while pinging_thread_work:
+        logging.info("Lanchain is still invoking")
+        sleep(1)
+    logging.info("Langhchain stopped")
+
 class AI_diagnos_lsp(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.diagnostics = {}
         init_ai(api_key)
+        if os.getenv("AI_DIAGNOS_LOG") is not None:
+            logging.basicConfig(
+                    filename="/tmp/ai_diagnos_lsp.log",
+                    level=logging.DEBUG,
+                    format='%(asctime)s [%(levelname)s] %(message)s',
+                    datefmt='%H:%M:%S'
+                    )
+            global pinging_thread_work
+            pinging_thread_work = True
 
     def parse(self, document: TextDocument):
         _, previous = self.diagnostics.get(document.uri, (0, []))
         diagnostics = []
+        
+        if os.getenv("AI_DIAGNOS_LOG") is not None:
+            logging.info("starting the chain")
+            threading.Thread(target=PingingThread, daemon=True).start()
+
         tmp = GeneralAnalysisChain.invoke({
             "file_content": f"{document.source}"
             })
+
+        global pinging_thread_work
+        pinging_thread_work = False
+
         for i in tmp.diagnostics:
             try:
                 pos = grep(i.location, document.source)[0]
@@ -138,7 +168,7 @@ def main():
     api_key = args.api_key
 
 
-    server = AI_diagnos_lsp('ai_diagnos', "v0.1 DEV")
+    server = AI_diagnos_lsp('ai_diagnos', "v0.2 DEV")
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
