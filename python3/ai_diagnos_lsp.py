@@ -20,7 +20,6 @@ import argparse
 
 import threading
 import logging
-from datetime import datetime
 import os
 
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
@@ -103,7 +102,7 @@ class AI_diagnos_lsp(LanguageServer):
         init_ai(api_key)
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.basicConfig(
-                    filename="/tmp/ai_diagnos_lsp.log",
+                    filename="~/.ai_diagnos_lsp.log",
                     level=logging.DEBUG,
                     format='%(asctime)s [%(levelname)s] %(message)s',
                     datefmt='%H:%M:%S'
