@@ -127,14 +127,24 @@ class AI_diagnos_lsp(LanguageServer):
 
         for i in tmp.diagnostics:
             try:
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.info("searching the file with grep. ")
+                    logging.info(f"searching for : {i.location} ; in {document.uri}")
                 pos = grep(i.location, document.source)[0]
                 pos_line = pos[0]
                 pos_char = pos[1]
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.info(f"found {i.location} at line : {pos_line}, char : {pos_char}")
             except IndexError:
                 # Ignore the diagnostic entirely, because if no matches were found, it means that the AI
                 # halucinated, wich makes this one specific diagnostic is wrong, wich is not worth the hassle
                 # to try to use. So it is skipped. This is by design, not an error. 
+
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.info("Errored out. Most likely a halucinated citate.")
                 continue 
+            if os.getenv("AI_DIAGNOS_LOG") is not None:
+                logging.info(f"DIAGNOSTIC : error message:  {i.error_message} ; severity level : {i.severity_level} ; pos line : {pos_line} ; pos char :  {pos_char}")
             diagnostics.append(
                     types.Diagnostic(
                         message=i.error_message,
@@ -147,6 +157,8 @@ class AI_diagnos_lsp(LanguageServer):
                         )
                     )
         if previous != diagnostics:
+            if os.getenv("AI_DIAGNOS_LOG") is not None:
+                logging.info("publishing diagnostics I guess....")
             self.diagnostics[document.uri] = (document.version, diagnostics)
 
 
