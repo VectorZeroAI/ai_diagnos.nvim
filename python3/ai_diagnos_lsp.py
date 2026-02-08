@@ -102,7 +102,7 @@ class AI_diagnos_lsp(LanguageServer):
         init_ai(api_key)
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.basicConfig(
-                    filename="~/.ai_diagnos_lsp.log",
+                    filename="ai_diagnos_lsp.log",
                     level=logging.DEBUG,
                     format='%(asctime)s [%(levelname)s] %(message)s',
                     datefmt='%H:%M:%S'
