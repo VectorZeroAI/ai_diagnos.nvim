@@ -176,20 +176,8 @@ class AI_diagnos_lsp(LanguageServer):
 
 def main():
     global api_key
-    def parse_args():
-        parser = argparse.ArgumentParser(description='My LSP Server')
-        parser.add_argument(
-            '--api-key',
-            type=str,
-            required=True,
-            help='API key for the service'
-        )
-        return parser.parse_args()
-
-    # Parse arguments
-    args = parse_args()
-    api_key = args.api_key
-
+    global config
+    config = None
 
     server = AI_diagnos_lsp('ai_diagnos', "v0.2 stable")
 
@@ -198,6 +186,22 @@ def main():
         """ Diagnose each document when it is opened """
         doc = ls.workspace.get_text_document(params.text_document.uri)
         ls.parse(doc)
+        global config
+        if config is None:
+            params_config = types.ConfigurationParams(
+                items=[
+                    types.ConfigurationItem(section="api_key")
+                    # NOTE : This is a list, of items of type configuration Item, and
+                    # Each of those items practically tells the editor what configuration value were looking for
+                    # I assume no scope will take the global scope. 
+                ]
+            )
+
+            def callback(config):
+                global api_key
+                api_key = config[0]
+
+            config = ls.workspace_configuration(params_config, callback)
 
     @server.feature(types.TEXT_DOCUMENT_DID_SAVE)
     def did_save(ls: AI_diagnos_lsp, params: types.DidSaveTextDocumentParams):
