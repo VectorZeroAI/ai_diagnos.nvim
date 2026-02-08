@@ -11,4 +11,4 @@ dependencies = [
 ]
 
 [project.scripts]
-ai-diagnos-lsp = "ai_diagnos_lsp.py:main"
+ai-diagnos-lsp = "ai_diagnos_lsp:main"
