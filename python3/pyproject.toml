@@ -9,3 +9,6 @@ dependencies = [
     "langchain-openai>=1.1.7",
     "pygls>=2.0.1",
 ]
+
+[project.scripts]
+ai-diagnos-lsp = "ai_diagnos_lsp.py:main"

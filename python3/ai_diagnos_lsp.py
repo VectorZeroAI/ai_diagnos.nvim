@@ -18,7 +18,7 @@ from pathlib import Path
 
 import re
 
-import config
+OPENROUTER_API_KEY = ""
 
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
     """
@@ -56,7 +56,7 @@ def init_ai():
     global DiagnosticsOutputObjekt
     Llm = ChatOpenAI(
             model="openrouter/pony-alpha",
-            api_key=SecretStr(config.OPENROUTER_API_KEY), 
+            api_key=SecretStr(OPENROUTER_API_KEY), 
             base_url="https://openrouter.ai/api/v1"
             )
     try:
@@ -197,6 +197,9 @@ def workspace_diagnostic( ls: AI_diagnos_lsp, params: types.WorkspaceDiagnosticP
             )
 
     return types.WorkspaceDiagnosticReport(items=items)
+
+def main():
+    start_server(server)
 
 if __name__ == "__main__":
     start_server(server)
