@@ -109,7 +109,7 @@ class AI_diagnos_lsp(LanguageServer):
             diagnostics.append(
                     types.Diagnostic(
                         message=i.error_message,
-                        severity=i.severity_level.value,
+                        severity=i.severity_level,
                         range=types.Range(
                             start=types.Position(pos_line, pos_char),
                             end=types.Position(pos_line, pos_char)
