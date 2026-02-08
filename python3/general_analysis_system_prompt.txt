@@ -20,4 +20,18 @@ Expected JSON example :
         }
     ]
 }
+Anouther Example of an expected valid JSON : 
+{
+    "diagnostics": [
+        {
+            "location": "def grep();",
+            "error_message": "Semicolon insdead of a colon in the function definition",
+            "severity_level":1
+        },
+        {
+            "location": "clas foo:",
+            "error_message": "'class' keyword misspelled"
+        }
+    ]
+}
 severity_level must be an integer from 1 to 4 , with 1 = ERROR , 2 = WARNING , 3 = INFORMATION , 4 = HINT
