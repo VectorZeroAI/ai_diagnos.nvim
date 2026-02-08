@@ -113,10 +113,11 @@ class AI_diagnos_lsp(LanguageServer):
     def parse(self, document: TextDocument):
         _, previous = self.diagnostics.get(document.uri, (0, []))
         diagnostics = []
-        
+
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.info("starting the chain")
             threading.Thread(target=PingingThread, daemon=True).start()
+            logging.info(f"chain started with input document as {document.source}")
 
         tmp = GeneralAnalysisChain.invoke({
             "file_content": f"{document.source}"
