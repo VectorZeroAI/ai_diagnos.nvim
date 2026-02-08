@@ -43,15 +43,29 @@ function M.setup(user_config)
         }
     end
     -- Setup the LSP client
-    lspconfig.ai_diagnos.setup({
-        cmd = M.config.cmd,
-        filetypes = M.config.filetypes,
-        root_dir = M.config.root_dir,
-        settings = M.config.settings,
-        on_attach = M.config.on_attach,
-        capabilities = M.config.capabilities,
-        init_options = M.config.init_options,
-    })
+    local sucsess = pcall(
+        lspconfig.ai_diagnos.setup({
+            cmd = M.config.cmd,
+            filetypes = M.config.filetypes,
+            root_dir = M.config.root_dir,
+            settings = M.config.settings,
+            on_attach = M.config.on_attach,
+            capabilities = M.config.capabilities,
+            init_options = M.config.init_options,
+        })
+    )
+    if sucsess ~= true then
+        local script_path = debug.getinfo(1, "S").source:sub(2)
+        lspconfig.ai_diagnos.setup({
+            cmd = string.format("cd %s/../python3 && uv pip install -e . && source .venv/bin/activate && ai-diagnos-lsp", script_path),
+            filetypes = M.config.filetypes,
+            root_dir = M.config.root_dir,
+            settings = M.config.settings,
+            on_attach = M.config.on_attach,
+            capabilities = M.config.capabilities,
+            init_options = M.config.init_options,
+        })
+    end
 end
 
 return M
