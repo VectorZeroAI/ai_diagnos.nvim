@@ -18,7 +18,7 @@ from pathlib import Path
 
 import re
 
-OPENROUTER_API_KEY = "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"
+import argparse
 
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
     """
@@ -48,7 +48,7 @@ def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) 
     return matches
 
 
-def init_ai():
+def init_ai(api_key_input: str):
     global Llm
     global GENERAL_ANALYSIS_SYSTEM_PROMPT
     global GeneralAnalysisPrompt
@@ -56,7 +56,7 @@ def init_ai():
     global DiagnosticsOutputObjekt
     Llm = ChatOpenAI(
             model="openrouter/pony-alpha",
-            api_key=SecretStr(OPENROUTER_API_KEY), 
+            api_key=SecretStr(api_key_input), 
             base_url="https://openrouter.ai/api/v1"
             )
     try:
