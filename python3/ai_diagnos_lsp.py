@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from enum import IntEnum
 from typing import List, Union, Tuple
 from pydantic import SecretStr
 from pygls.lsp.server import LanguageServer
@@ -99,7 +98,7 @@ class AI_diagnos_lsp(LanguageServer):
             })
         for i in tmp.diagnostics:
             try:
-                pos = grep(i.location.citation, document.source)[0]
+                pos = grep(i.location, document.source)[0]
                 pos_line = pos[0]
                 pos_char = pos[1]
             except IndexError:
