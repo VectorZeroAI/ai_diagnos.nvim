@@ -90,6 +90,7 @@ def init_ai(api_key_input: str):
 
 def PingingThread():
     from time import sleep
+    global pinging_thread_work
     while pinging_thread_work:
         logging.info("Lanchain is still invoking")
         sleep(1)
@@ -149,7 +150,7 @@ class AI_diagnos_lsp(LanguageServer):
                 # to try to use. So it is skipped. This is by design, not an error. 
 
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info("Errored out. Most likely a halucinated citate.")
+                    logging.info("Errored out. Most likely a halucinated citation.")
                 continue 
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.info(f"DIAGNOSTIC : error message:  {i.error_message} ; severity level : {i.severity_level} ; pos line : {pos_line} ; pos char :  {pos_char}")
@@ -190,7 +191,7 @@ def main():
     api_key = args.api_key
 
 
-    server = AI_diagnos_lsp('ai_diagnos', "v0.2 DEV")
+    server = AI_diagnos_lsp('ai_diagnos', "v0.2 stable")
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
