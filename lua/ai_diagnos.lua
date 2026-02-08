@@ -6,15 +6,11 @@ local M = {}
 -- Setup function called by users in their config
 function M.setup(user_config)
 
-    -- Default configuration
-    local script_path = debug.getinfo(1, "S").source:sub(2)
-    local plugin_dir = vim.fn.fnamemodify(script_path, ':h')
-    local python_script = plugin_dir .. '/../python3/ai_diagnos_lsp.py'
 
     local configs = require('lspconfig.configs')
 
     local default_config = {
-        cmd = { 'python3', python_script },
+        cmd = { 'ai-diagnos-lsp' },
         filetypes = { 'python', 'go', 'lua' },
         root_dir = require('lspconfig').util.root_pattern('.git'),
     }
