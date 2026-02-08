@@ -65,7 +65,7 @@ def init_ai(api_key_input: str):
         raise NotImplementedError("The prompt file is missing. Go write it") from e
     GeneralAnalysisPrompt = ChatPromptTemplate.from_messages([
             ("system", f"{GENERAL_ANALYSIS_SYSTEM_PROMPT}"),
-            ("human", "\n{file_content}\n\n"),
+            ("human", "\n{{file_content}}\n\n"),
             ], template_format="mustache")
     class DiagnosticsPydanticObjekt(BaseModel):
         class SingleDiagnostic(BaseModel):
