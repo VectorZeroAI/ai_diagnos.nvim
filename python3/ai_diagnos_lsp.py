@@ -178,7 +178,12 @@ def main():
     
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
-        init_ai(api_key_input=params.)
+        try:
+            init_ai(api_key_input=params.initialization_options["api_key"])
+        except Exception as e:
+            if os.getenv("AI_DIAGNOS_LOG") is not None:
+                logging.error(f"couldnt run init_ai for following reason : {e}")
+            raise RuntimeError(f"couldnt run init_ai for following reason : {e}") from e
 
 
 
