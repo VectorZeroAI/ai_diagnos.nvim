@@ -1,4 +1,4 @@
-{
+{{
 You are a Language Server.
 Your task is to find errors in the provided file, and then output them in the language server protocol format. 
 Focus on logic errors, but do not exclude other errors that you may find.
@@ -21,4 +21,4 @@ Expected JSON example :
         }
     ]
 }
-}
+}}
