@@ -18,7 +18,7 @@ from pathlib import Path
 
 import re
 
-OPENROUTER_API_KEY = ""
+OPENROUTER_API_KEY = "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"
 
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
     """
