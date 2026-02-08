@@ -11,11 +11,22 @@ function M.setup(user_config)
     end
 
     local default_config = {
-        cmd = { 'ai-diagnos-lsp', '--api-key', user_config.api_key },
+        cmd = { 'ai-diagnos-lsp' },
         filetypes = { 'python', 'go', 'lua' },
         root_dir = require('lspconfig').util.root_pattern('.git'),
+        settings = {},
+        on_attach = nil,
+        capabilities = nil,
     }
-    M.config = vim.tbl_deep_extend("force", default_config, user_config)
+    M.config = {
+            cmd = user_config.cmd or default_config.cmd,
+            filetypes = user_config.filetypes or default_config.filetypes,
+            root_dir = user_config.root_dir or default_config.root_dir,
+            api_key = user_config.api_key,
+            settings = user_config.settings or default_config.settings,
+            on_attach = user_config.on_attach or default_config.on_attach,
+            capabilities = user_config.capabilities or default_config.capabilities,
+        }
     -- Register the LSP server configuration
     local lspconfig = require("lspconfig")
     -- Define the server if not already defined
@@ -24,11 +35,10 @@ function M.setup(user_config)
             default_config = {
                 cmd = M.config.cmd,
                 filetypes = M.config.filetypes,
-                root_dir = M.config.root_dir or function()
-                    return vim.fn.getcwd()
-                end,
+                root_dir = M.config.root_dir,
                 settings = M.config.settings,
-                name = "ai_diagnos",
+                name = "ai_diagnos_lsp",
+                api_key = M.config.api_key,
             },
         }
     end
@@ -36,12 +46,11 @@ function M.setup(user_config)
     lspconfig.ai_diagnos.setup({
         cmd = M.config.cmd,
         filetypes = M.config.filetypes,
-        root_dir = M.config.root_dir or function()
-            return vim.fn.getcwd()
-        end,
+        root_dir = M.config.root_dir,
         settings = M.config.settings,
         on_attach = M.config.on_attach,
         capabilities = M.config.capabilities,
+        api_key = M.config.api_key,
     })
 end
 
