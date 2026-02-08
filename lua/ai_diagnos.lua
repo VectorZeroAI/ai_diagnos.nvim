@@ -26,7 +26,7 @@ function M.setup(user_config)
             settings = user_config.settings or default_config.settings,
             on_attach = user_config.on_attach or default_config.on_attach,
             capabilities = user_config.capabilities or default_config.capabilities,
-            init_options = user_config.api_key or default_config.init_options,
+            init_options = {api_key = user_config.api_key or default_config.init_options},
         }
     -- Register the LSP server configuration
     local lspconfig = require("lspconfig")

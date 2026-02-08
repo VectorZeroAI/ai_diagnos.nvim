@@ -176,82 +176,13 @@ def main():
 
     server = AI_diagnos_lsp('ai_diagnos', "v0.3 DEV")
     
-    @server.feature(types.INITIALIZED)
-    def on_startup(ls: AI_diagnos_lsp, params: types.InitializedParams):
-        global _flag_callback_ran
-        _flag_callback_ran = False
+    @server.feature(types.INITIALIZE)
+    def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
+        init_ai(api_key_input=params.)
 
-        if os.getenv("AI_DIAGNOS_LOG") is not None:
-            logging.info("INITIALIZED RAN")
-            logging.info(f"initialise params = {params}")
 
-        global config
 
-        try:
 
-            params_config = types.ConfigurationParams(
-                items=[
-                    types.ConfigurationItem(section="api_key")
-                    # NOTE : This is a list, of items of type configuration Item, and
-                    # Each of those items practically tells the editor what configuration value were looking for
-                    # I assume no scope will take the global scope. 
-                ]
-            )
-        except Exception as e:
-
-            if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.error("couldnt form the configuration request's parameters")
-            raise RuntimeError("lines 184 - 189 . couldnt form the configuration request's parameters") from e
-
-        def callback(config):
-
-            global _flag_callback_ran
-            global api_key
-            if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.info("callback ran")
-            try:
-                api_key = config[0]
-            except Exception as e:
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.error("couldnt asign api_key from config[0], line 206")
-                raise RuntimeError("couldnt asign api_key from config[0], line 206") from e
-            _flag_callback_ran = True
-            
-        
-        try: 
-            config = ls.workspace_configuration(params_config, callback).result()
-
-        except Exception as e:
-            if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.error("couldnt get the workspace configuration. ")
-
-            raise RuntimeError("line 201 , couldnt get the workspace configuration. ") from e
-
-        global api_key
-
-        if not _flag_callback_ran:
-            if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.error("callback didnt run when it was supposed to . ")
-
-            raise RuntimeError("callback didnt run when it was supposed to . ")
-
-        try:
-            if os.getenv("AI_DIAGNOS_LOG") is not None:
-                try:
-                    logging.info(f"running init_ai() with api key of the following length: {len(api_key)}")
-                except Exception as e:
-                    logging.error("couldnt compute the length of api_key.")
-                    if api_key is None:
-                        logging.error("api key is none")
-                        raise RuntimeError("api key is None") from e
-
-            init_ai(api_key)
-
-        except Exception as e:
-            if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.error("couldnt run the init_ai function. line 208")
-
-            raise RuntimeError("couldnt run the init_ai function. line 208") from e
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
