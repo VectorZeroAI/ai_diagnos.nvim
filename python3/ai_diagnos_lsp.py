@@ -174,9 +174,9 @@ class AI_diagnos_lsp(LanguageServer):
 def main():
     global config
 
-    server = AI_diagnos_lsp('ai_diagnos', "v0.2 DEV")
+    server = AI_diagnos_lsp('ai_diagnos', "v0.3 DEV")
     
-    @server.feature(types.INITIALIZE)
+    @server.feature(types.INITIALIZED)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
         global _flag_callback_ran
         _flag_callback_ran = False
@@ -219,7 +219,7 @@ def main():
             
         
         try: 
-            config = ls.workspace_configuration(params_config, callback)
+            config = ls.workspace_configuration(params_config, callback).result()
 
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
