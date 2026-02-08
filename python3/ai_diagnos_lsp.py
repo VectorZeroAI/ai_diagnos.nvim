@@ -57,7 +57,7 @@ def init_ai(api_key_input: str):
     global GeneralAnalysisChain
     global DiagnosticsOutputObjekt
     Llm = ChatOpenAI(
-            model="stepfun/step-3.5-flash:free",
+            model="nvidia/nemotron-3-nano-30b-a3b:free",
             api_key=SecretStr(api_key_input), 
             base_url="https://openrouter.ai/api/v1"
             )
