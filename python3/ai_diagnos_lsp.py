@@ -135,85 +135,85 @@ class AI_diagnos_lsp(LanguageServer):
         if previous != diagnostics:
             self.diagnostics[document.uri] = (document.version, diagnostics)
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='My LSP Server')
-    parser.add_argument(
-        '--api-key',
-        type=str,
-        required=True,
-        help='API key for the Openrouter API'
-    )
-    return parser.parse_args()
-
-# Parse arguments
-args = parse_args()
-api_key = args.api_key
-
-server = AI_diagnos_lsp('ai_diagnos', "v0.1 DEV")
-
-
-@server.feature(types.TEXT_DOCUMENT_DID_OPEN)
-def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
-    """ Diagnose each document when it is opened """
-    doc = ls.workspace.get_text_document(params.text_document.uri)
-    ls.parse(doc)
-
-@server.feature(types.TEXT_DOCUMENT_DID_SAVE)
-def did_save(ls: AI_diagnos_lsp, params: types.DidSaveTextDocumentParams):
-    """ Diagnose each document when it is saved, e.g. on save. As was done by the previous version of the plugin """
-    doc = ls.workspace.get_text_document(params.text_document.uri)
-    ls.parse(doc)
-
-@server.feature(
-        types.TEXT_DOCUMENT_DIAGNOSTIC,
-        types.DiagnosticOptions(
-            identifier="pull-diagnostics",
-            inter_file_dependencies=False,
-            workspace_diagnostics=True,
-            ),
-        )
-def document_diagnostic(ls: AI_diagnos_lsp, params: types.DocumentDiagnosticParams):
-    """ Return diagnostics for the requested document """
-    
-    if (uri := params.text_document.uri) not in ls.diagnostics:
-        return
-
-    version, diagnostics = ls.diagnostics[uri]
-    result_id = f"{uri}@{version}"
-
-    if result_id == params.previous_result_id:
-        return types.UnchangedDocumentDiagnosticReport(result_id)
-
-    return types.FullDocumentDiagnosticReport(items=diagnostics, result_id=result_id)
-
-@server.feature(types.WORKSPACE_DIAGNOSTIC)
-def workspace_diagnostic( ls: AI_diagnos_lsp, params: types.WorkspaceDiagnosticParams ):
-    """Return diagnostics for the workspace."""
-    # logging.info("%s", params)
-    items = []
-    previous_ids = {result.value for result in params.previous_result_ids}
-
-    for uri, (version, diagnostics) in ls.diagnostics.items():
-        result_id = f"{uri}@{version}"
-        if result_id in previous_ids:
-            items.append(
-                types.WorkspaceUnchangedDocumentDiagnosticReport(
-                    uri=uri, result_id=result_id, version=version
-                )
-            )
-        else:
-            items.append(
-                types.WorkspaceFullDocumentDiagnosticReport(
-                    uri=uri,
-                    version=version,
-                    items=diagnostics,
-                )
-            )
-
-    return types.WorkspaceDiagnosticReport(items=items)
 
 def main():
-    start_server(server)
+    global api_key
+    def parse_args():
+        parser = argparse.ArgumentParser(description='My LSP Server')
+        parser.add_argument(
+            '--api-key',
+            type=str,
+            required=True,
+            help='API key for the service'
+        )
+        return parser.parse_args()
 
-if __name__ == "__main__":
-    start_server(server)
+    # Parse arguments
+    args = parse_args()
+    api_key = args.api_key
+
+
+    server = AI_diagnos_lsp('ai_diagnos', "v0.1 DEV")
+
+    @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
+    def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
+        """ Diagnose each document when it is opened """
+        doc = ls.workspace.get_text_document(params.text_document.uri)
+        ls.parse(doc)
+
+    @server.feature(types.TEXT_DOCUMENT_DID_SAVE)
+    def did_save(ls: AI_diagnos_lsp, params: types.DidSaveTextDocumentParams):
+        """ Diagnose each document when it is saved, e.g. on save. As was done by the previous version of the plugin """
+        doc = ls.workspace.get_text_document(params.text_document.uri)
+        ls.parse(doc)
+
+    @server.feature(
+            types.TEXT_DOCUMENT_DIAGNOSTIC,
+            types.DiagnosticOptions(
+                identifier="pull-diagnostics",
+                inter_file_dependencies=False,
+                workspace_diagnostics=True,
+                ),
+            )
+    def document_diagnostic(ls: AI_diagnos_lsp, params: types.DocumentDiagnosticParams):
+        """ Return diagnostics for the requested document """
+        
+        if (uri := params.text_document.uri) not in ls.diagnostics:
+            return
+
+        version, diagnostics = ls.diagnostics[uri]
+        result_id = f"{uri}@{version}"
+
+        if result_id == params.previous_result_id:
+            return types.UnchangedDocumentDiagnosticReport(result_id)
+
+        return types.FullDocumentDiagnosticReport(items=diagnostics, result_id=result_id)
+
+    @server.feature(types.WORKSPACE_DIAGNOSTIC)
+    def workspace_diagnostic( ls: AI_diagnos_lsp, params: types.WorkspaceDiagnosticParams ):
+        """Return diagnostics for the workspace."""
+        # logging.info("%s", params)
+        items = []
+        previous_ids = {result.value for result in params.previous_result_ids}
+
+        for uri, (version, diagnostics) in ls.diagnostics.items():
+            result_id = f"{uri}@{version}"
+            if result_id in previous_ids:
+                items.append(
+                    types.WorkspaceUnchangedDocumentDiagnosticReport(
+                        uri=uri, result_id=result_id, version=version
+                    )
+                )
+            else:
+                items.append(
+                    types.WorkspaceFullDocumentDiagnosticReport(
+                        uri=uri,
+                        version=version,
+                        items=diagnostics,
+                    )
+                )
+
+        return types.WorkspaceDiagnosticReport(items=items)
+
+    server.start_io()
+
