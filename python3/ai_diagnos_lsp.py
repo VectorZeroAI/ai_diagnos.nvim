@@ -69,26 +69,13 @@ def init_ai(api_key_input: str):
             ], template_format="mustache")
     class DiagnosticsPydanticObjekt(BaseModel):
         class SingleDiagnostic(BaseModel):
-            class Severity(IntEnum):
-                """ Error Severity Level """
-                ERROR = 1
-                WARNING = 2
-                INFORMATION = 3
-                HINT = 4
 
-            class Location(BaseModel):
-                """
-                Wrong spot citation based location of the error. 
-                So you basically citate the wrong place, and we find it
-                """
-                citation: str
-                # TODO : implement the citation to line and colum transformation
-                
-
-            location: Location
+            location: str
             error_message: str
-            severity_level: Severity
+            severity_level: int
+
             # TODO : Double check if this is enough
+
             class Config:
                 populate_by_name = True
 
@@ -112,7 +99,7 @@ class AI_diagnos_lsp(LanguageServer):
             })
         for i in tmp.diagnostics:
             try:
-                pos = grep(i.location.citation, document.source)[0] # NOTE : EVERYTHING IS SO FUCKED ! 
+                pos = grep(i.location.citation, document.source)[0]
                 pos_line = pos[0]
                 pos_char = pos[1]
             except IndexError:

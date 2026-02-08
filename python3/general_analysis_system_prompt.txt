@@ -20,3 +20,4 @@ Expected JSON example :
         }
     ]
 }
+severity_level must be an integer from 1 to 4 , with 1 = ERROR , 2 = WARNING , 3 = INFORMATION , 4 = HINT
