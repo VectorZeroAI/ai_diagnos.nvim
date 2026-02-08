@@ -11,7 +11,7 @@ function M.setup(user_config)
     end
 
     local default_config = {
-        cmd = { 'ai-diagnos-lsp', user_config.api_key },
+        cmd = { 'ai-diagnos-lsp', '--api-key', user_config.api_key },
         filetypes = { 'python', 'go', 'lua' },
         root_dir = require('lspconfig').util.root_pattern('.git'),
     }
