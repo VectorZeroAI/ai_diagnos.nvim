@@ -48,14 +48,14 @@ def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) 
     return matches
 
 
-def init_ai(api_key_input: str):
+def init_ai(api_key_input: str, model: str):
     global Llm
     global GENERAL_ANALYSIS_SYSTEM_PROMPT
     global GeneralAnalysisPrompt
     global GeneralAnalysisChain
     global DiagnosticsOutputObjekt
     Llm = ChatOpenAI(
-            model="tngtech/tng-r1t-chimera:free",
+            model=model,
             api_key=SecretStr(api_key_input), 
             base_url="https://openrouter.ai/api/v1"
             )
@@ -181,7 +181,7 @@ def main():
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
         try:
-            init_ai(api_key_input=params.initialization_options["api_key"])
+            init_ai(api_key_input=params.initialization_options["api_key"], model=params.initialization_options["model"])
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.error(f"couldnt run init_ai for following reason : {e}")
