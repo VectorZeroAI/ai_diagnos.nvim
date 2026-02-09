@@ -147,7 +147,7 @@ class AI_diagnos_lsp(LanguageServer):
                     await asyncio.sleep(show_progress_every_ms / 1000)  # Check every n seconds
                     if show_progress:
                         show_message(my_ls, f"Langchain is still running [{counter}]")
-                        counter = counter + 1
+                        counter =+ 1
                 
                 # Timed out
                 return None
