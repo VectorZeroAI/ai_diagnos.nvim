@@ -10,7 +10,10 @@ with lazy.nivm:
 
 {
     "VectorZeroAI/ai_diagnos.nvim",
-    dependencies = { "nvim-lua/plenary.nvim" },
+    build = function ()
+        require('ai_diagnos_lsp').build()
+    end
+    dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
     config = function()
         require("ai-diagnostics").setup({
             api_key = vim.env.OPENROUTER_API_KEY,
@@ -25,17 +28,33 @@ with lazy.nivm:
 
 ## Parameters:
 
-1. api_key --> is an required parameter, used to acsess the API.
-2. model --> optional parameter, tells the plugin wich OpenRouter model to use, defaults to antropic/claude-3.5-sonnet.
-3. debounce_ms --> optional parameter, defines how muchtime is the minimum between 2 writes is required to activate a new API call, to prevent the write spam from causing problmes.
-4. max_file_size --> optional parameter, defines the maimal file size (in lines) in order to prevent the model from analysing files that are to big.
-5. show_progress --> Boolean, optional parameter. It uses vim.notify("notification") to inform the users of the progress, so the users dont try to save the file again, since API calls create invisible wait perioudes.
+| parameter | role | example value |
+| ------------- | -------------- | -------------- |
+| api_key | I is an required parameter, used to acsess the API. | "sadgubwqeogfUWHEGHBAWELIGUBAIRUGBeirgbea" |
+| --------------- | ---------- | ------------ |
+| model |  optional parameter, tells the plugin wich OpenRouter model to use, defaults to antropic/claude-3.5-sonnet. | "anthropic/claude-3.5-sonnet"
+| --------------- | ---------- | ------------ |
+| debounce_ms |  optional parameter, defines how muchtime is the minimum between 2 writes is required to activate a new API call, to prevent the write spam from causing problmes. | 3000
+| --------------- | ---------- | ------------ |
+| max_file_size |  optional parameter, defines the maimal file size (in lines) in order to prevent the model from analysing files that are to big. | TODO: ADD |
+| --------------- | ---------- | ------------ |
+| show_progress |  Boolean, optional parameter. It uses vim.notify("notification") to inform the users of the progress, so the users dont try to save the file again, since API calls create invisible wait perioudes. | TODO: ADD |
+| --------------- | ---------- | ------------ |
+| root_dir |  optional parameter, tells the LSP how to find the root dir. Default value is ".git". | TODO: ADD |
+| --------------- | ---------- | ------------ |
+| cmd |  optional parameter, lets you change the command for initialising the connection with LSP. May or may not be usefull .  | TODO: ADD |
+| --------------- | ---------- | ------------ |
+| show_progress_every_ms |  optional, Tells the interval of how often the LSP should ping them with "Im still running" | TODO: ADD |
+| --------------- | ---------- | ------------ |
+| ai_diagnostics_symbol |  optional, Tells the client how to display AI diagnostics. Default value is "AI" | TODO: ADD |
+| --------------- | ---------- | ------------ |
 
 ## Commands:
-1. AIToggle --> toggles the AI diagnositics on and off
-2. AIClear --> clears all the AI diagnostics
-3. AIAnalyse --> forces rediagnosing the file.
-4. AIStatus --> Outputs status
+1. AIClear --> clears all the AI diagnostics
+2. AIAnalyse --> forces rediagnosing the file.
+3. AIStatus --> Outputs status   
+> [!NOTE]
+> Doesnt work right now. I am still implementing that.
 
 # Architecture
 (The new)
