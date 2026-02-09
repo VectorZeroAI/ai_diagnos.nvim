@@ -25,7 +25,7 @@ import time
 import asyncio
 
 def show_message(my_ls, message_itself: str, severity: int = 3):
-    my_ls.window_show_message(types.ShowMessageParams(type=types.MessageType(3), message=message_itself))
+    my_ls.window_show_message(types.ShowMessageParams(type=types.MessageType(severity), message=message_itself))
     # NOTE : Message types : 1 = ERROR , 2 = Warning , 3 = Info , 4 = Hind, 5 = Debug
 
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
@@ -109,7 +109,7 @@ class AI_diagnos_lsp(LanguageServer):
     def BasicDiagnoseFunction(self, document: TextDocument):
         _, previous = self.diagnostics.get(document.uri, (0, []))
 
-        def BasicDiagnoseFunctionWorker(document: TextDocument):
+        def BasicDiagnoseFunctionWorker():
             diagnostics = []
             severity_map = {
                     1: types.DiagnosticSeverity.Error,
@@ -199,8 +199,10 @@ class AI_diagnos_lsp(LanguageServer):
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
                     logging.info("publishing diagnostics I guess....")
                 self.diagnostics[document.uri] = (document.version, diagnostics)
-                return
-            return
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.info(f"published the following diagnostics {diagnostics} for document {document.uri}")
+                return logging.info("Worker thread ending")
+            return logging.warning("Worker thread ending without publishing diagnostics")
         
         threading.Thread(target=BasicDiagnoseFunctionWorker, daemon=True).start()
 
