@@ -24,6 +24,7 @@ import time
 
 import asyncio
 
+
 def show_message(my_ls, message_itself: str, severity: int = 3):
     my_ls.window_show_message(types.ShowMessageParams(type=types.MessageType(severity), message=message_itself))
     # NOTE : Message types : 1 = ERROR , 2 = Warning , 3 = Info , 4 = Hind, 5 = Debug
@@ -105,6 +106,7 @@ class AI_diagnos_lsp(LanguageServer):
                     format='%(asctime)s [%(levelname)s] %(message)s',
                     datefmt='%H:%M:%S'
                     )
+        self.last_diagnostic_time = time.time()
 
     def BasicDiagnoseFunction(self, document: TextDocument):
         _, previous = self.diagnostics.get(document.uri, (0, []))
@@ -208,14 +210,17 @@ class AI_diagnos_lsp(LanguageServer):
                 return logging.info("Worker thread ending")
             return logging.warning("Worker thread ending without publishing diagnostics")
         
-        threading.Thread(target=BasicDiagnoseFunctionWorker, daemon=True).start()
+        global debounce_ms
+
+        if time.time() - self.last_diagnostic_time >= debounce_ms / 1000:
+            threading.Thread(target=BasicDiagnoseFunctionWorker, daemon=True).start()
+        else:
+            show_message(self, "Debounced the diagnostic")
 
 
 
 
 def main():
-    global config
-
     server = AI_diagnos_lsp('ai_diagnos', "v0.3 DEV")
     
     @server.feature(types.INITIALIZE)
@@ -223,6 +228,7 @@ def main():
         global timeout_ms
         global show_progress
         global show_progress_every_ms
+        global debounce_ms
 
         global my_ls
         my_ls = ls
@@ -241,6 +247,7 @@ def main():
         timeout_ms = params.initialization_options["timeout_ms"]
         show_progress = params.initialization_options["show_progress"]
         show_progress_every_ms = params.initialization_options["show_progress_every_ms"]
+        debounce_ms = params.initialization_options["debounce_ms"]
 
 
 
