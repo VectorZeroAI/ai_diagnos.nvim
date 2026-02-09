@@ -56,7 +56,7 @@ function M.setup(user_config)
         }
     end
     -- Setup the LSP client
-    local sucsess = pcall(function ()
+    local success = pcall(function ()
             lspconfig.ai_diagnos.setup({
                 cmd = M.config.cmd,
                 filetypes = M.config.filetypes,
@@ -68,7 +68,7 @@ function M.setup(user_config)
             })
         end
     )
-    if sucsess ~= true then
+    if success ~= true then
         local script_path = debug.getinfo(1, "S").source:sub(2)
         local my_python = string.format("%s/../python3/.venv/bin/python", script_path)
         lspconfig.ai_diagnos.setup({
