@@ -87,14 +87,11 @@ function M.setup(user_config)
     end
 
     vim.api.nvim_create_user_command("AIAnalyse", function()
-        local params = {
-          uri = vim.uri_from_bufnr(0)  -- Current buffer URI
-        }
-        vim.cmd(string.format("LspCommand Analyse.Document %s", params))
+        error("Not implemented")
     end, {})
 
     vim.api.nvim_create_user_command("AIClear", function ()
-        vim.cmd("LspCommand Clear.AIDiagnostics")
+        error("Not implemented")
     end, {})
 end
 
