@@ -143,7 +143,8 @@ class AI_diagnos_lsp(LanguageServer):
                     if future.done():
                         return future.result()
                     await asyncio.sleep(show_progress_every_ms / 1000)  # Check every n seconds
-                    show_message(my_ls, "Langchain is still running")
+                    if show_progress:
+                        show_message(my_ls, "Langchain is still running")
                 
                 # Timed out
                 return None
@@ -193,6 +194,7 @@ class AI_diagnos_lsp(LanguageServer):
                             source="AI diagnos LSP"
                             )
                         )
+            
             if previous != diagnostics:
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
                     logging.info("publishing diagnostics I guess....")
