@@ -6,9 +6,10 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "langchain>=1.2.9",
+    "langchain-google-genai[standart]>=4.2.0",
     "langchain-openai>=1.1.7",
     "pygls>=2.0.1",
 ]
 
 [project.scripts]
-ai-diagnos-lsp = "ai_diagnos_lsp:main"
+ai-diagnos-lsp = "ai_diagnos_lsp.main:main"
