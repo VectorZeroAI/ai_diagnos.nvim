@@ -60,29 +60,6 @@ function M.setup(user_config)
 
     local ai_ns = vim.api.nvim_create_namespace("ai_lsp_diagnostics")
 
-    lspconfig.ai_diagnos.setup({
-        handlers = {
-            ["textDocument/diagnostic"] = function(err, result, ctx, config)
-                -- Run the original handler first
-                vim.lsp.handlers["textDocument/diagnostic"](err, result, ctx, config)
-              
-                -- Then also set to custom namespace for AI LSP
-                if not err and result and result.items then
-                    local bufnr = ctx.bufnr
-                    vim.diagnostic.set(ai_ns, bufnr, result.items, {
-                        signs = {
-                            text = {
-                                [vim.diagnostic.severity.ERROR] = M.config.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.WARN] = M.config.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.HINT] = M.config.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.INFO] = M.config.ai_diagnostics_symbol,
-                            }
-                        }
-                    })
-                end
-            end,
-          },
-    })
   
     -- Setup the LSP client
     local success = pcall(function ()
@@ -94,6 +71,27 @@ function M.setup(user_config)
                 on_attach = M.config.on_attach,
                 capabilities = M.config.capabilities,
                 init_options = M.config.init_options,
+                handlers = {
+                    ["textDocument/diagnostic"] = function(err, result, ctx, config)
+                        -- Run the original handler first
+                        vim.lsp.handlers["textDocument/diagnostic"](err, result, ctx, config)
+                      
+                        -- Then also set to custom namespace for AI LSP
+                        if not err and result and result.items then
+                            local bufnr = ctx.bufnr
+                            vim.diagnostic.set(ai_ns, bufnr, result.items, {
+                                signs = {
+                                    text = {
+                                        [vim.diagnostic.severity.ERROR] = M.config.ai_diagnostics_symbol,
+                                        [vim.diagnostic.severity.WARN] = M.config.ai_diagnostics_symbol,
+                                        [vim.diagnostic.severity.HINT] = M.config.ai_diagnostics_symbol,
+                                        [vim.diagnostic.severity.INFO] = M.config.ai_diagnostics_symbol,
+                                    }
+                                }
+                            })
+                        end
+                    end,
+                  },
             })
         end
     )
