@@ -87,11 +87,34 @@ function M.setup(user_config)
     end
 
     vim.api.nvim_create_user_command("AIAnalyse", function()
-        error("Not implemented")
+        local clients = vim.lsp.get_clients({ bufnr = 0, name = "ai_diagnos_lsp" })
+        
+        local uri = vim.uri_from_bufnr(0)
+
+        if clients[1] then
+            clients[1]:exec_cmd({ 
+                title="Analyse the current buffer with AI, e.g. basic parse.",
+                command="Analyse.Document",
+                arguments={
+                    uri
+                }
+            })
+        else
+            vim.notify("LSP not attached", vim.log.levels.WARN)
+        end
     end, {})
 
     vim.api.nvim_create_user_command("AIClear", function ()
-        error("Not implemented")
+        local clients = vim.lsp.get_clients({ bufnr = 0, name = "ai_diagnos_lsp" })
+        
+        if clients[1] then
+            clients[1]:exec_cmd({ 
+                title="Clear the AI diagnostics",
+                command="Clear.AIDiagnostics"
+            })
+        else
+            vim.notify("LSP not attached", vim.log.levels.WARN)
+        end
     end, {})
 end
 
