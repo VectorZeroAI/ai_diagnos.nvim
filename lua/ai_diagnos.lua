@@ -23,6 +23,7 @@ function M.setup(user_config)
         max_file_size = 10000,
         show_progress = true,
         show_progress_every_ms = 1000,
+        ai_diagnostics_symbol = "AI",
     }
     M.config = {
             cmd = user_config.cmd or default_config.cmd,
@@ -40,6 +41,7 @@ function M.setup(user_config)
                 show_progress = user_config.show_progress or default_config.show_progress,
                 show_progress_every_ms = user_config.show_progress_every_ms or default_config.show_progress_every_ms,
             },
+            ai_diagnostics_symbol = user_config.ai_diagnostics_symbol or default_config.ai_diagnostics_symbol,
         }
     -- Register the LSP server configuration
     local lspconfig = require("lspconfig")
@@ -55,6 +57,41 @@ function M.setup(user_config)
             },
         }
     end
+
+    local ai_ns = vim.api.nvim_create_namespace("ai_lsp_diagnostics")
+
+    lspconfig.ai_diagnos.setup({
+        handlers = {
+            -- Handle pull diagnostics response
+            ["textDocument/diagnostic"] = function(err, result, ctx, config)
+                if err then return end
+
+                local client = vim.lsp.get_client_by_id(ctx.client_id)
+                local bufnr = ctx.bufnr
+                -- Extract diagnostics from result
+                --
+                local diagnostics = result.items or result.relatedDocuments or {}
+                -- Set to custom namespace with custom signs
+                --
+                vim.diagnostic.set(ai_ns, bufnr, diagnostics)
+                -- Configure for this namespace
+                --
+                -- TODO : Try to asign ai_diagnostics_symbol[1] [2] [3] [4] , if fail, do what it does now
+                --
+                vim.diagnostic.config({
+                    signs = {
+                        text = {
+                            [vim.diagnostic.severity.ERROR] = M.config.ai_diagnostics_symbol,
+                            [vim.diagnostic.severity.WARN] = M.config.ai_diagnostics_symbol,
+                            [vim.diagnostic.severity.HINT] = M.config.ai_diagnostics_symbol,
+                            [vim.diagnostic.severity.INFO] = M.config.ai_diagnostics_symbol,
+                        }
+                    },
+                }, ai_ns)
+            end,
+        },
+    })
+  
     -- Setup the LSP client
     local success = pcall(function ()
             lspconfig.ai_diagnos.setup({

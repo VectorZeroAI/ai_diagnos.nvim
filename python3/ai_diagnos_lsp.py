@@ -19,8 +19,7 @@ import os
 import time
 import asyncio
 
-if os.getenv("AI_DIAGNOS_LOG") is not None:
-    import logging
+import logging
 
 def show_message(my_ls, message_itself: str, severity: int = 3):
     my_ls.window_show_message(types.ShowMessageParams(type=types.MessageType(severity), message=message_itself))
@@ -320,7 +319,7 @@ def main():
 
         return types.WorkspaceDiagnosticReport(items=items)
 
-    @server.command("AnalyseDocument")
+    @server.command("Analyse.Document")
     def AnalyseDocument(ls: AI_diagnos_lsp, params: Sequence[ Any | None]):
         """ Analyses a document by URI . REQUIRES a URI as its parameter """
         try:
@@ -333,7 +332,7 @@ def main():
             ls.BasicDiagnoseFunction(doc)
             # TODO : Add good logging
     
-    @server.command("ClearAIDiagnostics")
+    @server.command("Clear.AIDiagnostics")
     def ClearAIDiagnostics(ls: AI_diagnos_lsp):
         ls.diagnostics = {}
         show_message(ls, "succesfully cleared the diagnostics")
