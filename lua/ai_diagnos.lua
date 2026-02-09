@@ -81,6 +81,17 @@ function M.setup(user_config)
             init_options = M.config.init_options,
         })
     end
+
+    vim.api.nvim_create_user_command("AIAnalyse", function()
+        local params = {
+          uri = vim.uri_from_bufnr(0)  -- Current buffer URI
+        }
+        vim.cmd(string.format("LspCommand Analyse.Document %s", params))
+    end, {})
+
+    vim.api.nvim_create_user_command("AIClear", function ()
+        vim.cmd("LspCommand Clear.AIDiagnostics")
+    end, {})
 end
 
 function M.build()
@@ -91,7 +102,7 @@ function M.build()
         command=string.format("cd %s/../python3 && python -m venv venv", script_path),
         on_exit=function ()
             Job:new({
-                command=string.format("%s -m pip install -e %d/../python3/.", my_python, script_path),
+                command=string.format("%s -m pip install -e %s/../python3/.", my_python, script_path),
                 on_exit=print('Dependancies installed ! ')
             })
         end,
