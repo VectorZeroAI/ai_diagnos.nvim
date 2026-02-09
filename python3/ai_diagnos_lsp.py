@@ -320,7 +320,7 @@ def main():
 
         return types.WorkspaceDiagnosticReport(items=items)
 
-    @server.command("AnalyseCurrentDocument")
+    @server.command("AnalyseDocument")
     def AnalyseDocument(ls: AI_diagnos_lsp, params: Sequence[ Any | None]):
         """ Analyses a document by URI . REQUIRES a URI as its parameter """
         try:
@@ -332,6 +332,11 @@ def main():
         else:
             ls.BasicDiagnoseFunction(doc)
             # TODO : Add good logging
+    
+    @server.command("ClearAIDiagnostics")
+    def ClearAIDiagnostics(ls: AI_diagnos_lsp):
+        ls.diagnostics = {}
+        show_message(ls, "succesfully cleared the diagnostics")
 
     server.start_io()
 
