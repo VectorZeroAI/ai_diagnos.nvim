@@ -21,8 +21,8 @@ function M.setup(user_config)
         model = "tngtech/tng-r1t-chimera:free",
         debounce_ms = 3000,
         max_file_size = 10000,
-        show_progress = false,
-        show_progress_every_ms = 500,
+        show_progress = true,
+        show_progress_every_ms = 1000,
     }
     M.config = {
             cmd = user_config.cmd or default_config.cmd,

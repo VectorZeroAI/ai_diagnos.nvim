@@ -85,8 +85,8 @@ def init_ai(api_key_input: str, model: str):
 
             # TODO : Double check if this is enough
 
-            class Config:
-                populate_by_name = True
+        class Config:
+            populate_by_name = True
 
         diagnostics: List[SingleDiagnostic]
 
@@ -125,6 +125,8 @@ class AI_diagnos_lsp(LanguageServer):
             LangchainTimedOut = False
 
             async def GeneralAnalysisChainInvokation():
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.info("Started The async GeneralAnalysisChainInvokation function")
                 global show_progress
                 global my_ls
                 global show_progress_every_ms
@@ -137,6 +139,8 @@ class AI_diagnos_lsp(LanguageServer):
                     GeneralAnalysisChain.invoke,
                     {"file_content": f"{document.source}"}
                 )
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.info("invoked the langhchain")
                 
                 # Poll until done or timeout
                 while not LangchainTimedOut:
