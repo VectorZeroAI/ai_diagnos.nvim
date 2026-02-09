@@ -65,7 +65,7 @@ def init_ai(api_key_input: str, model: str):
             base_url="https://openrouter.ai/api/v1"
             )
     try:
-        with open(f"{Path(__file__).absolute().resolve().parent}/general_analysis_system_prompt.txt", "r") as f:
+        with open(f"{Path(__file__).absolute().resolve().parent}/prompts/general_analysis_system_prompt.txt", "r") as f:
             GENERAL_ANALYSIS_SYSTEM_PROMPT = f.read()
     except FileNotFoundError as e:
         raise NotImplementedError("The prompt file is missing. Go write it") from e
