@@ -20,6 +20,10 @@ import threading
 import logging
 import os
 
+import time
+
+import asyncio
+
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
     """
     Search for a pattern and return (line_number, character_position) for each match.
@@ -86,16 +90,6 @@ def init_ai(api_key_input: str, model: str):
 
     GeneralAnalysisChain = GeneralAnalysisPrompt | Llm | GeneralDiagnosticsOutputParser
 
-def PingingThread():
-    from time import sleep
-
-    global pinging_thread_work
-
-    while pinging_thread_work:
-        logging.info("Lanchain is still invoking")
-        sleep(1)
-    logging.info("Langhchain stopped")
-
 class AI_diagnos_lsp(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -107,70 +101,99 @@ class AI_diagnos_lsp(LanguageServer):
                     format='%(asctime)s [%(levelname)s] %(message)s',
                     datefmt='%H:%M:%S'
                     )
-            global pinging_thread_work
-            pinging_thread_work = True
 
-    def parse(self, document: TextDocument):
+    def BasicParseFunction(self, document: TextDocument):
         _, previous = self.diagnostics.get(document.uri, (0, []))
-        diagnostics = []
 
-        severity_map = {
-                1: types.DiagnosticSeverity.Error,
-                2: types.DiagnosticSeverity.Warning,
-                3: types.DiagnosticSeverity.Information,
-                4: types.DiagnosticSeverity.Hint
-                }
+        def BasicParseFunctionWorker(document: TextDocument):
+            diagnostics = []
+            severity_map = {
+                    1: types.DiagnosticSeverity.Error,
+                    2: types.DiagnosticSeverity.Warning,
+                    3: types.DiagnosticSeverity.Information,
+                    4: types.DiagnosticSeverity.Hint
+                    }
 
-        if os.getenv("AI_DIAGNOS_LOG") is not None:
-            logging.info("starting the chain")
-            threading.Thread(target=PingingThread, daemon=True).start()
-            logging.info(f"chain started with input document as {document.source}")
-
-        tmp = GeneralAnalysisChain.invoke({
-            "file_content": f"{document.source}"
-            })
-
-        global pinging_thread_work
-        pinging_thread_work = False
-
-        for i in tmp.diagnostics:
-            try:
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info("searching the file with grep. ")
-                    logging.info(f"searching for : {i.location} ; in {document.uri}")
-                pos = grep(i.location, document.source)[0]
-                pos_line = pos[0]
-                pos_char = pos[1]
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info(f"found {i.location} at line : {pos_line}, char : {pos_char}")
-            except IndexError:
-                # Ignore the diagnostic entirely, because if no matches were found, it means that the AI
-                # halucinated, wich makes this one specific diagnostic is wrong, wich is not worth the hassle
-                # to try to use. So it is skipped. This is by design, not an error. 
-
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info("Errored out. Most likely a halucinated citation.")
-                continue 
             if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.info(f"DIAGNOSTIC : error message:  {i.error_message} ; severity level : {i.severity_level} ; pos line : {pos_line} ; pos char :  {pos_char}")
+                logging.info("starting the chain")
+                logging.info(f"chain started with input document as {document.source}")
 
-            severity_level_converted = severity_map.get(i.severity_level)
+            LangchainTimedOut = False
 
-            diagnostics.append(
-                    types.Diagnostic(
-                        message=i.error_message + "      [AI GENERATED]",
-                        severity=severity_level_converted,
-                        range=types.Range(
-                            start=types.Position(pos_line, pos_char),
-                            end=types.Position(pos_line, pos_char)
-                            ), 
-                        source="AI diagnos LSP"
+            async def GeneralAnalysisChainInvokation():
+                loop = asyncio.get_event_loop()
+                
+                # Run the blocking invoke() in a thread
+                future = loop.run_in_executor(
+                    None, 
+                    GeneralAnalysisChain.invoke,
+                    {"file_content": f"{document.source}"}
+                )
+                
+                # Poll until done or timeout
+                while not LangchainTimedOut:
+                    if future.done():
+                        return future.result()
+                    await asyncio.sleep(0.1)  # Check every 100ms
+                
+                # Timed out
+                return None
+
+            def LangchainTimedOutSetterThread(timeout_interval_ms: int):
+                time.sleep(timeout_interval_ms / 1000)
+                nonlocal LangchainTimedOut
+                LangchainTimedOut = True
+
+            threading.Thread(target=LangchainTimedOutSetterThread).start()
+            tmp = asyncio.run(GeneralAnalysisChainInvokation())
+            
+            if tmp is None:
+                return
+
+            for i in tmp.diagnostics:
+                try:
+                    if os.getenv("AI_DIAGNOS_LOG") is not None:
+                        logging.info("searching the file with grep. ")
+                        logging.info(f"searching for : {i.location} ; in {document.uri}")
+                    pos = grep(i.location, document.source)[0]
+                    pos_line = pos[0]
+                    pos_char = pos[1]
+                    if os.getenv("AI_DIAGNOS_LOG") is not None:
+                        logging.info(f"found {i.location} at line : {pos_line}, char : {pos_char}")
+                except IndexError:
+                    # Ignore the diagnostic entirely, because if no matches were found, it means that the AI
+                    # halucinated, wich makes this one specific diagnostic is wrong, wich is not worth the hassle
+                    # to try to use. So it is skipped. This is by design, not an error. 
+
+                    if os.getenv("AI_DIAGNOS_LOG") is not None:
+                        logging.info("Errored out. Most likely a halucinated citation.")
+                    continue 
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.info(f"DIAGNOSTIC : error message:  {i.error_message} ; severity level : {i.severity_level} ; pos line : {pos_line} ; pos char :  {pos_char}")
+
+                severity_level_converted = severity_map.get(i.severity_level)
+
+                diagnostics.append(
+                        types.Diagnostic(
+                            message=i.error_message + "      [AI GENERATED]",
+                            severity=severity_level_converted,
+                            range=types.Range(
+                                start=types.Position(pos_line, pos_char),
+                                end=types.Position(pos_line, pos_char)
+                                ), 
+                            source="AI diagnos LSP"
+                            )
                         )
-                    )
-        if previous != diagnostics:
-            if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.info("publishing diagnostics I guess....")
-            self.diagnostics[document.uri] = (document.version, diagnostics)
+            if previous != diagnostics:
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.info("publishing diagnostics I guess....")
+                self.diagnostics[document.uri] = (document.version, diagnostics)
+                return
+            return
+        
+        threading.Thread(target=BasicParseFunctionWorker, daemon=True).start()
+
+
 
 
 def main():
@@ -186,18 +209,22 @@ def main():
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.error(f"couldnt run init_ai for following reason : {e}")
             raise RuntimeError(f"couldnt run init_ai for following reason : {e}") from e
+        global timeout_ms
+        timeout_ms = params.initialization_options["timeout_ms"]
+
+
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
         """ Diagnose each document when it is opened """
         doc = ls.workspace.get_text_document(params.text_document.uri)
-        ls.parse(doc)
+        ls.BasicParseFunction(doc)
 
     @server.feature(types.TEXT_DOCUMENT_DID_SAVE)
     def did_save(ls: AI_diagnos_lsp, params: types.DidSaveTextDocumentParams):
         """ Diagnose each document when it is saved, e.g. on save. As was done by the previous version of the plugin """
         doc = ls.workspace.get_text_document(params.text_document.uri)
-        ls.parse(doc)
+        ls.BasicParseFunction(doc)
 
     @server.feature(
             types.TEXT_DOCUMENT_DIAGNOSTIC,
