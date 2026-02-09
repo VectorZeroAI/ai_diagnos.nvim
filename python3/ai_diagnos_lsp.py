@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import List, Union, Tuple
+from typing import List, Sequence, Union, Tuple, Any
 from pydantic import SecretStr
 from pygls.lsp.server import LanguageServer
 from pygls.workspace import TextDocument
@@ -106,7 +106,7 @@ class AI_diagnos_lsp(LanguageServer):
                     format='%(asctime)s [%(levelname)s] %(message)s',
                     datefmt='%H:%M:%S'
                     )
-        self.last_diagnostic_time = time.time()
+        self.last_diagnostic_time = 0
 
     def BasicDiagnoseFunction(self, document: TextDocument):
 
@@ -231,7 +231,7 @@ class AI_diagnos_lsp(LanguageServer):
 
 
 def main():
-    server = AI_diagnos_lsp('ai_diagnos', "v0.3 DEV")
+    server = AI_diagnos_lsp('ai_diagnos', "v0.4 DEV")
     
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
@@ -322,6 +322,19 @@ def main():
                 )
 
         return types.WorkspaceDiagnosticReport(items=items)
+
+    @server.command("AnalyseCurrentDocument")
+    def AnalyseDocument(ls: AI_diagnos_lsp, params: Sequence[ Any | None]):
+        """ Analyses a document by URI . REQUIRES a URI as its parameter """
+        try:
+            assert params[0] is not None
+            doc = ls.workspace.get_text_document(params[0])
+        except Exception as e:
+            show_message(my_ls, f"Couldnt get the URI parameter due to the following error {e}", 1)
+            return
+        else:
+            ls.BasicDiagnoseFunction(doc)
+            # TODO : Add good logging
 
     server.start_io()
 
