@@ -227,7 +227,7 @@ class AI_diagnos_lsp(LanguageServer):
 
 
 def main():
-    server = AI_diagnos_lsp('ai_diagnos', "v0.4 DEV")
+    server = AI_diagnos_lsp('ai_diagnos', "v0.5 DEV")
     
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
