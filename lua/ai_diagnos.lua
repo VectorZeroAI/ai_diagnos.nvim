@@ -22,6 +22,7 @@ function M.setup(user_config)
         debounce_ms = 3000,
         max_file_size = 10000,
         show_progress = false,
+        show_progress_every_ms = 500,
     }
     M.config = {
             cmd = user_config.cmd or default_config.cmd,
@@ -37,6 +38,7 @@ function M.setup(user_config)
                 debounce_ms = user_config.debounce_ms or default_config.debounce_ms,
                 max_file_size = user_config.max_file_size or default_config.max_file_size,
                 show_progress = user_config.show_progress or default_config.show_progress,
+                show_progress_every_ms = user_config.show_progress_every_ms or default_config.show_progress_every_ms,
             },
         }
     -- Register the LSP server configuration

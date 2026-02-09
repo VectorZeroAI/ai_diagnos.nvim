@@ -24,6 +24,10 @@ import time
 
 import asyncio
 
+def show_message(my_ls, message_itself: str, severity: int = 3):
+    my_ls.window_show_message(types.ShowMessageParams(type=types.MessageType(3), message=message_itself))
+    # NOTE : Message types : 1 = ERROR , 2 = Warning , 3 = Info , 4 = Hind, 5 = Debug
+
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
     """
     Search for a pattern and return (line_number, character_position) for each match.
@@ -102,10 +106,10 @@ class AI_diagnos_lsp(LanguageServer):
                     datefmt='%H:%M:%S'
                     )
 
-    def BasicParseFunction(self, document: TextDocument):
+    def BasicDiagnoseFunction(self, document: TextDocument):
         _, previous = self.diagnostics.get(document.uri, (0, []))
 
-        def BasicParseFunctionWorker(document: TextDocument):
+        def BasicDiagnoseFunctionWorker(document: TextDocument):
             diagnostics = []
             severity_map = {
                     1: types.DiagnosticSeverity.Error,
@@ -121,6 +125,10 @@ class AI_diagnos_lsp(LanguageServer):
             LangchainTimedOut = False
 
             async def GeneralAnalysisChainInvokation():
+                global show_progress
+                global my_ls
+                global show_progress_every_ms
+                
                 loop = asyncio.get_event_loop()
                 
                 # Run the blocking invoke() in a thread
@@ -134,7 +142,8 @@ class AI_diagnos_lsp(LanguageServer):
                 while not LangchainTimedOut:
                     if future.done():
                         return future.result()
-                    await asyncio.sleep(0.1)  # Check every 100ms
+                    await asyncio.sleep(show_progress_every_ms / 1000)  # Check every n seconds
+                    show_message(my_ls, "Langchain is still running")
                 
                 # Timed out
                 return None
@@ -191,7 +200,7 @@ class AI_diagnos_lsp(LanguageServer):
                 return
             return
         
-        threading.Thread(target=BasicParseFunctionWorker, daemon=True).start()
+        threading.Thread(target=BasicDiagnoseFunctionWorker, daemon=True).start()
 
 
 
@@ -203,14 +212,27 @@ def main():
     
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
+        global timeout_ms
+        global show_progress
+        global show_progress_every_ms
+
+        global my_ls
+        my_ls = ls
+
+        assert params.initialization_options is not None
+
         try:
             init_ai(api_key_input=params.initialization_options["api_key"], model=params.initialization_options["model"])
+
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.error(f"couldnt run init_ai for following reason : {e}")
+
             raise RuntimeError(f"couldnt run init_ai for following reason : {e}") from e
-        global timeout_ms
+
         timeout_ms = params.initialization_options["timeout_ms"]
+        show_progress = params.initialization_options["show_progress"]
+        show_progress_every_ms = params.initialization_options["show_progress_every_ms"]
 
 
 
@@ -218,13 +240,13 @@ def main():
     def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
         """ Diagnose each document when it is opened """
         doc = ls.workspace.get_text_document(params.text_document.uri)
-        ls.BasicParseFunction(doc)
+        ls.BasicDiagnoseFunction(doc)
 
     @server.feature(types.TEXT_DOCUMENT_DID_SAVE)
     def did_save(ls: AI_diagnos_lsp, params: types.DidSaveTextDocumentParams):
         """ Diagnose each document when it is saved, e.g. on save. As was done by the previous version of the plugin """
         doc = ls.workspace.get_text_document(params.text_document.uri)
-        ls.BasicParseFunction(doc)
+        ls.BasicDiagnoseFunction(doc)
 
     @server.feature(
             types.TEXT_DOCUMENT_DIAGNOSTIC,
