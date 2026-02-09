@@ -13,17 +13,14 @@ from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel
 
 from pathlib import Path
-
 import re
-
 import threading
-import logging
 import os
-
 import time
-
 import asyncio
 
+if os.getenv("AI_DIAGNOS_LOG") is not None:
+    import logging
 
 def show_message(my_ls, message_itself: str, severity: int = 3):
     my_ls.window_show_message(types.ShowMessageParams(type=types.MessageType(severity), message=message_itself))
