@@ -17,7 +17,11 @@ function M.setup(user_config)
         settings = {},
         on_attach = nil,
         capabilities = nil,
-        init_options = {},
+        timeout_ms = 99999,
+        model = "tngtech/tng-r1t-chimera:free",
+        debounce_ms = 3000,
+        max_file_size = 10000,
+        show_progress = false,
     }
     M.config = {
             cmd = user_config.cmd or default_config.cmd,
@@ -26,7 +30,14 @@ function M.setup(user_config)
             settings = user_config.settings or default_config.settings,
             on_attach = user_config.on_attach or default_config.on_attach,
             capabilities = user_config.capabilities or default_config.capabilities,
-            init_options = {api_key = user_config.api_key or default_config.init_options},
+            init_options = {
+                api_key = user_config.api_key,
+                timeout_ms = user_config.timeout_ms or default_config.timeout_ms,
+                model = user_config.model or default_config.model,
+                debounce_ms = user_config.debounce_ms or default_config.debounce_ms,
+                max_file_size = user_config.max_file_size or default_config.max_file_size,
+                show_progress = user_config.show_progress or default_config.show_progress,
+            },
         }
     -- Register the LSP server configuration
     local lspconfig = require("lspconfig")
@@ -56,8 +67,11 @@ function M.setup(user_config)
     )
     if sucsess ~= true then
         local script_path = debug.getinfo(1, "S").source:sub(2)
+        os.execute(string.format("cd %s/../python3 && python -m venv venv", script_path))
+        local my_python = string.format("%s/../python3/.venv/bin/python", script_path)
+        os.execute(string.format("%s -m pip install -e %d/../python3/.", my_python, script_path))
         lspconfig.ai_diagnos.setup({
-            cmd = string.format("cd %s/../python3 && uv pip install -e . && source .venv/bin/activate && ai-diagnos-lsp", script_path),
+            cmd = string.format("%s -m ai_diagnos_lsp", my_python),
             filetypes = M.config.filetypes,
             root_dir = M.config.root_dir,
             settings = M.config.settings,
