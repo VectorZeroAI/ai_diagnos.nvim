@@ -70,9 +70,7 @@ function M.setup(user_config)
     )
     if sucsess ~= true then
         local script_path = debug.getinfo(1, "S").source:sub(2)
-        os.execute(string.format("cd %s/../python3 && python -m venv venv", script_path))
         local my_python = string.format("%s/../python3/.venv/bin/python", script_path)
-        os.execute(string.format("%s -m pip install -e %d/../python3/.", my_python, script_path))
         lspconfig.ai_diagnos.setup({
             cmd = string.format("%s -m ai_diagnos_lsp", my_python),
             filetypes = M.config.filetypes,
@@ -83,6 +81,26 @@ function M.setup(user_config)
             init_options = M.config.init_options,
         })
     end
+end
+
+function M.build()
+    local Job = require('plenary.job')
+    local script_path = debug.getinfo(1, "S").source:sub(2)
+    local my_python = string.format("%s/../python3/.venv/bin/python", script_path)
+    Job:new({
+        command=string.format("cd %s/../python3 && python -m venv venv", script_path),
+        on_exit=function ()
+            Job:new({
+                command=string.format("%s -m pip install -e %d/../python3/.", my_python, script_path),
+                on_exit=print('Dependancies installed ! ')
+            })
+        end,
+        on_stderr=function()
+            print('failed at installing dependancies. ')
+            print(string.format("please go to %s and run 'python -m venv venv' and then run '.venv/bin/python -m pip install -e .'"))
+            print('On any issues, I am deeply sorry. Open an Issue on github. ')
+        end
+    })
 end
 
 return M
