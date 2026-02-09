@@ -12,4 +12,4 @@ dependencies = [
 ]
 
 [project.scripts]
-ai-diagnos-lsp = "ai_diagnos_lsp.main:main"
+ai_diagnos_lsp = "ai_diagnos_lsp.main:main"
