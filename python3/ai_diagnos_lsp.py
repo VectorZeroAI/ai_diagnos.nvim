@@ -109,7 +109,6 @@ class AI_diagnos_lsp(LanguageServer):
         self.last_diagnostic_time = time.time()
 
     def BasicDiagnoseFunction(self, document: TextDocument):
-        _, previous = self.diagnostics.get(document.uri, (0, []))
 
         def BasicDiagnoseFunctionWorker():
             diagnostics = []
@@ -209,13 +208,24 @@ class AI_diagnos_lsp(LanguageServer):
                     logging.info(f"published the following diagnostics {diagnostics} for document {document.uri}")
                 return logging.info("Worker thread ending")
             return logging.warning("Worker thread ending without publishing diagnostics")
+
+
+
+        _, previous = self.diagnostics.get(document.uri, (0, []))
         
         global debounce_ms
+        global max_file_size
+        
+        if len(document.lines) > max_file_size:
+            show_message(self, "File size is to big. Rejecting")
+            return
 
-        if time.time() - self.last_diagnostic_time >= debounce_ms / 1000:
-            threading.Thread(target=BasicDiagnoseFunctionWorker, daemon=True).start()
-        else:
+        if not time.time() - self.last_diagnostic_time >= debounce_ms / 1000:
             show_message(self, "Debounced the diagnostic")
+            return
+
+        threading.Thread(target=BasicDiagnoseFunctionWorker, daemon=True).start()
+        return
 
 
 
@@ -229,6 +239,7 @@ def main():
         global show_progress
         global show_progress_every_ms
         global debounce_ms
+        global max_file_size
 
         global my_ls
         my_ls = ls
@@ -248,6 +259,7 @@ def main():
         show_progress = params.initialization_options["show_progress"]
         show_progress_every_ms = params.initialization_options["show_progress_every_ms"]
         debounce_ms = params.initialization_options["debounce_ms"]
+        max_file_size = params.initialization_options["max_file_size"]
 
 
 
