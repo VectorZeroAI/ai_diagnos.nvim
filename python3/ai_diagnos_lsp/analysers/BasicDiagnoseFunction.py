@@ -1,4 +1,4 @@
-from typing import Iterable, List, Union, Tuple
+from typing import List, Union, Tuple
 from lsprotocol import types
 from pygls.workspace import TextDocument
 import logging
@@ -88,7 +88,7 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
         logging.info("starting the chain")
         logging.info(f"chain started with input document as {document.source}")
 
-    timeout_ms_as_str = os.getenv('timeout_ms')
+    timeout_ms_as_str = os.getenv('timeout')
     assert timeout_ms_as_str is not None
     timeout = int(timeout_ms_as_str)
 

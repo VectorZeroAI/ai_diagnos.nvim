@@ -90,7 +90,7 @@ def main():
 
         assert params.initialization_options["model"] is not None
         assert params.initialization_options["api_key"] is not None
-        assert params.initialization_options["timeout_ms"] is not None
+        assert params.initialization_options["timeout"] is not None
         assert params.initialization_options["show_progress"] is not None
         assert params.initialization_options["show_progress_every_ms"] is not None
         assert params.initialization_options["debounce_ms"] is not None
@@ -98,7 +98,7 @@ def main():
 
         os.environ['model_openrouter'] = str(params.initialization_options["model"])
         os.environ['api_key_openrouter'] = str(params.initialization_options["api_key"])
-        os.environ['timeout_ms'] = str(params.initialization_options["timeout_ms"])
+        os.environ['timeout'] = str(params.initialization_options["timeout"])
         os.environ['show_progress'] = str(params.initialization_options["show_progress"])
         os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
         os.environ['debounce_ms'] = str(params.initialization_options["debounce_ms"])
@@ -107,7 +107,7 @@ def main():
         ls.config = {
                 "model_openrouter" : str(params.initialization_options["model"]), 
                 "api_key_openrouter": str(params.initialization_options["api_key"]),
-                "timeout_ms" :  str(params.initialization_options["timeout_ms"]),
+                "timeout" :  str(params.initialization_options["timeout"]),
                 "show_progress" :  str(params.initialization_options["show_progress"]),
                 "show_progress_every_ms" :  str(params.initialization_options["show_progress_every_ms"]),
                 "debounce_ms" :  str(params.initialization_options["debounce_ms"]),
