@@ -22,7 +22,7 @@ function M.setup(user_config)
         debounce_ms = 3000,
         max_file_size = 10000,
         show_progress = true,
-        show_progress_every_ms = 1000,
+        show_progress_every_ms = 5000,
         ai_diagnostics_symbol = "AI",
     }
     M.config = {
@@ -92,21 +92,21 @@ function M.setup(user_config)
             if client then
                 if client.name == "ai-lsp" then
 
---                    local ns = vim.lsp.diagnostic.get_namespace(client.id, true)
---                    vim.diagnostic.config({
---                        signs = {
---                            text = {
---                                [vim.diagnostic.severity.ERROR] = M.config.ai_diagnostics_symbol,
---                                [vim.diagnostic.severity.WARN]  = M.config.ai_diagnostics_symbol,
---                                [vim.diagnostic.severity.INFO]  = M.config.ai_diagnostics_symbol,
---                                [vim.diagnostic.severity.HINT]  = M.config.ai_diagnostics_symbol,
---                                -- TODO : Add more options on how to display the AI diagnostics
---                            },
---                        },
---                    }, ns)
+                    local ns = vim.lsp.diagnostic.get_namespace(client.id, true)
+                    vim.diagnostic.config({
+                        signs = {
+                            text = {
+                                [vim.diagnostic.severity.ERROR] = M.config.ai_diagnostics_symbol,
+                                [vim.diagnostic.severity.WARN]  = M.config.ai_diagnostics_symbol,
+                                [vim.diagnostic.severity.INFO]  = M.config.ai_diagnostics_symbol,
+                                [vim.diagnostic.severity.HINT]  = M.config.ai_diagnostics_symbol,
+                                -- TODO : Add more options on how to display the AI diagnostics
+                            },
+                        },
+                    }, ns)
 
                     vim.api.nvim_create_user_command("AIAnalyse", function()
-                        local uri = vim.uri_from_bufnr(0)
+                        local uri = vim.lsp.util.make_text_document_params().uri
 
                         client:exec_cmd({ 
                             title="Analyse the current buffer with AI, e.g. basic parse.",
