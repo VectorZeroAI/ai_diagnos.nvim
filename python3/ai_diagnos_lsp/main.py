@@ -159,7 +159,7 @@ def main():
             assert params[0] is not None
             doc = ls.workspace.get_text_document(params[0])
         except Exception as e:
-            ls.window_show_message(f"Couldnt get the URI parameter due to the following error {e}", 1)
+            ls.window_show_message(types.ShowMessageParams(types.MessageType(1), "Couldnt get the URI parameter due to the following error {e}"))
             return
         else:
             ls.BasicDiagnoseFunction(doc)
@@ -168,7 +168,7 @@ def main():
     @server.command("Clear.AIDiagnostics")
     def ClearAIDiagnostics(ls: AI_diagnos_lsp):
         ls.diagnostics = {}
-        ls.window_show_message(ls, "succesfully cleared the diagnostics")
+        ls.window_show_message(types.ShowMessageParams(types.MessageType(3), "succesfully cleared the diagnostics"))
 
     server.start_io()
 
