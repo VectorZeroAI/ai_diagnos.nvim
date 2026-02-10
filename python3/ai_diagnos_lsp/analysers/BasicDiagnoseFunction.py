@@ -169,11 +169,15 @@ def BasicDiagnoseFunction(document: TextDocument, ls):
         if previous != diagnostics:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.info("publishing diagnostics I guess....")
+
             ls.diagnostics[document.uri] = (document.version, diagnostics)
+
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.info(f"published the following diagnostics {diagnostics} for document {document.uri}")
+
+            ls.workspace_diagnostic_refresh(None).result()
             return logging.info("Worker thread ending")
-        ls.workspace_diagnostic_refresh(None).result()
+
         return logging.warning("Worker thread ending without publishing diagnostics")
 
 
