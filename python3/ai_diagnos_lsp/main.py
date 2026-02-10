@@ -12,7 +12,7 @@ import logging
 
 from pygls.workspace import TextDocument
 
-from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunction as BasicDiagnoseFunction
+global BasicDiagnoseFunction
 
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
     """
@@ -42,7 +42,6 @@ def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) 
     return matches
 
 class AI_diagnos_lsp(LanguageServer):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.diagnostics = {}
@@ -66,6 +65,10 @@ def main():
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
 
         assert params.initialization_options is not None
+        global BasicDiagnoseFunction
+
+
+        from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunction as BasicDiagnoseFunction
 
         try:
 
