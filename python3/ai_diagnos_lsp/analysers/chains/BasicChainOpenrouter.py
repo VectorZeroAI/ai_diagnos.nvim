@@ -18,7 +18,7 @@ def BasicChainOpenrouterFactory(model: str, api_key: str) -> RunnableSerializabl
 
     Llm = ChatOpenAI(
             model=model,
-            base_url="https://openrouter.ai/api/v1/chat/completions",
+            base_url="https://openrouter.ai/api/v1/",
             api_key=SecretStr(api_key_openrouter)
             )
 
