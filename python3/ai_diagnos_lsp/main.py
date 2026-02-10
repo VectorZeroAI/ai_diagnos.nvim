@@ -167,12 +167,12 @@ def main():
         return types.WorkspaceDiagnosticReport(items=items)
 
     @server.command("Analyse.Document")
-    def AnalyseDocument(ls: AI_diagnos_lsp, params: Sequence[ Any | None]):
+    def AnalyseDocument(ls: AI_diagnos_lsp, params: Sequence[ Any | None ]):
         """ Analyses a document by URI . REQUIRES a URI as its parameter """
         try:
             assert params[0] is not None
             doc = ls.workspace.get_text_document(params[0])
-        except Exception as e:
+        except Exception:
             ls.window_show_message(types.ShowMessageParams(types.MessageType(1), "Couldnt get the URI parameter due to the following error {e}"))
             return
         else:

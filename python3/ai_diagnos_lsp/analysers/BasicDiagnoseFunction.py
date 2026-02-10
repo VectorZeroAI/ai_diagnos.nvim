@@ -1,11 +1,11 @@
-from typing import Iterable, List, Never, Union, Tuple
+from typing import List, Union, Tuple
 from lsprotocol import types
 from pygls.workspace import TextDocument
 import logging
 import os
 import threading
 
-from ai_diagnos_lsp.analysers.chains.BasicChainOpenrouter import BasicChainOpenrouter, DiagnosticsPydanticObjekt
+from ai_diagnos_lsp.analysers.chains.BasicChainOpenrouter import BasicChainOpenrouterFactory
 
 import re
 
@@ -92,6 +92,13 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
     assert timeout_ms_as_str is not None
     timeout_ms = int(timeout_ms_as_str)
 
+    model = os.getenv('model_openrouter')
+    assert model is not None
+
+    api_key = os.getenv('api_key_openrouter')
+    assert api_key is not None
+
+    BasicChainOpenrouter = BasicChainOpenrouterFactory(model=model, api_key=api_key)
 
     langchain_completed_event = threading.Event()
 
