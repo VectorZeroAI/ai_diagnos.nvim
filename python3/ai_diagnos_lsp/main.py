@@ -1,23 +1,12 @@
 #!/usr/bin/env python3
 
 from typing import List, Sequence, Union, Tuple, Any
-from pydantic import SecretStr
 from pygls.lsp.server import LanguageServer
-from pygls.workspace import TextDocument
 
 from lsprotocol import types
 
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
-from pydantic import BaseModel
-
-from pathlib import Path
 import re
-import threading
 import os
-import time
-import asyncio
 
 import logging
 
@@ -52,45 +41,6 @@ def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) 
     
     return matches
 
-
-def init_ai(api_key_input: str, model: str):
-    global Llm
-    global GENERAL_ANALYSIS_SYSTEM_PROMPT
-    global GeneralAnalysisPrompt
-    global GeneralAnalysisChain
-    global DiagnosticsOutputObjekt
-    Llm = ChatOpenAI(
-            model=model,
-            api_key=SecretStr(api_key_input), 
-            base_url="https://openrouter.ai/api/v1"
-            )
-    try:
-        with open(f"{Path(__file__).absolute().resolve().parent}/prompts/general_analysis_system_prompt.txt", "r") as f:
-            GENERAL_ANALYSIS_SYSTEM_PROMPT = f.read()
-    except FileNotFoundError as e:
-        raise NotImplementedError("The prompt file is missing. Go write it") from e
-    GeneralAnalysisPrompt = ChatPromptTemplate.from_messages([
-            ("system", f"{GENERAL_ANALYSIS_SYSTEM_PROMPT}"),
-            ("human", "\n{{file_content}}\n\n"),
-            ], template_format="mustache")
-    class DiagnosticsPydanticObjekt(BaseModel):
-        class SingleDiagnostic(BaseModel):
-
-            location: str
-            error_message: str
-            severity_level: int
-
-            # TODO : Double check if this is enough
-
-        class Config:
-            populate_by_name = True
-
-        diagnostics: List[SingleDiagnostic]
-
-    GeneralDiagnosticsOutputParser = PydanticOutputParser(pydantic_object=DiagnosticsPydanticObjekt)
-
-    GeneralAnalysisChain = GeneralAnalysisPrompt | Llm | GeneralDiagnosticsOutputParser
-
 class AI_diagnos_lsp(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -104,130 +54,7 @@ class AI_diagnos_lsp(LanguageServer):
                     )
         self.last_diagnostic_time = 0
 
-    def BasicDiagnoseFunction(self, document: TextDocument):
-
-        def BasicDiagnoseFunctionWorker():
-            diagnostics = []
-            severity_map = {
-                    1: types.DiagnosticSeverity.Error,
-                    2: types.DiagnosticSeverity.Warning,
-                    3: types.DiagnosticSeverity.Information,
-                    4: types.DiagnosticSeverity.Hint
-                    }
-
-            if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.info("starting the chain")
-                logging.info(f"chain started with input document as {document.source}")
-
-            LangchainTimedOut = False
-
-            async def GeneralAnalysisChainInvokation():
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info("Started The async GeneralAnalysisChainInvokation function")
-                global show_progress
-                global my_ls
-                global show_progress_every_ms
-                
-                loop = asyncio.get_event_loop()
-                
-                # Run the blocking invoke() in a thread
-                future = loop.run_in_executor(
-                    None, 
-                    GeneralAnalysisChain.invoke,
-                    {"file_content": f"{document.source}"}
-                )
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info("invoked the langhchain")
-                
-                counter = 0
-                # Poll until done or timeout
-                while not LangchainTimedOut:
-                    if future.done():
-                        return future.result()
-                    await asyncio.sleep(show_progress_every_ms / 1000)  # Check every n seconds
-                    if show_progress:
-                        show_message(my_ls, f"Langchain is still running [{counter}]")
-                        counter = counter + 1
-                
-                # Timed out
-                return None
-
-            def LangchainTimedOutSetterThread(timeout_interval_ms: int):
-                time.sleep(timeout_interval_ms / 1000)
-                nonlocal LangchainTimedOut
-                LangchainTimedOut = True
-
-            threading.Thread(target=LangchainTimedOutSetterThread).start()
-            tmp = asyncio.run(GeneralAnalysisChainInvokation())
-            
-            if tmp is None:
-                return
-
-            for i in tmp.diagnostics:
-                try:
-                    if os.getenv("AI_DIAGNOS_LOG") is not None:
-                        logging.info("searching the file with grep. ")
-                        logging.info(f"searching for : {i.location} ; in {document.uri}")
-                    pos = grep(i.location, document.source)[0]
-                    pos_line = pos[0]
-                    pos_char = pos[1]
-                    if os.getenv("AI_DIAGNOS_LOG") is not None:
-                        logging.info(f"found {i.location} at line : {pos_line}, char : {pos_char}")
-                except IndexError:
-                    # Ignore the diagnostic entirely, because if no matches were found, it means that the AI
-                    # halucinated, wich makes this one specific diagnostic is wrong, wich is not worth the hassle
-                    # to try to use. So it is skipped. This is by design, not an error. 
-
-                    if os.getenv("AI_DIAGNOS_LOG") is not None:
-                        logging.info("Errored out. Most likely a halucinated citation.")
-                    continue 
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info(f"DIAGNOSTIC : error message:  {i.error_message} ; severity level : {i.severity_level} ; pos line : {pos_line} ; pos char :  {pos_char}")
-
-                severity_level_converted = severity_map.get(i.severity_level)
-
-                diagnostics.append(
-                        types.Diagnostic(
-                            message=i.error_message + "      [AI GENERATED]",
-                            severity=severity_level_converted,
-                            range=types.Range(
-                                start=types.Position(pos_line, pos_char),
-                                end=types.Position(pos_line, pos_char)
-                                ), 
-                            source="AI diagnos LSP"
-                            )
-                        )
-            
-            if previous != diagnostics:
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info("publishing diagnostics I guess....")
-                self.diagnostics[document.uri] = (document.version, diagnostics)
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info(f"published the following diagnostics {diagnostics} for document {document.uri}")
-                return logging.info("Worker thread ending")
-            my_ls.workspace_diagnostic_refresh(None).result()
-            return logging.warning("Worker thread ending without publishing diagnostics")
-            
-
-
-
-        _, previous = self.diagnostics.get(document.uri, (0, []))
-        
-        global debounce_ms
-        global max_file_size
-        
-        if len(document.lines) > max_file_size:
-            show_message(self, "File size is to big. Rejecting")
-            return
-
-        if not time.time() - self.last_diagnostic_time >= debounce_ms / 1000:
-            show_message(self, "Debounced the diagnostic")
-            return
-
-        threading.Thread(target=BasicDiagnoseFunctionWorker, daemon=True).start()
-        return
-
-
+    from ai_diagnos_lsp. import BasicDiagnoseFunction
 
 
 def main():
@@ -235,11 +62,6 @@ def main():
     
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
-        global timeout_ms
-        global show_progress
-        global show_progress_every_ms
-        global debounce_ms
-        global max_file_size
 
         global my_ls
         my_ls = ls
@@ -247,7 +69,11 @@ def main():
         assert params.initialization_options is not None
 
         try:
-            init_ai(api_key_input=params.initialization_options["api_key"], model=params.initialization_options["model"])
+
+            os.environ['model_openrouter'] = params.initialization_options["model"]
+            os.environ['api_key_openrouter'] = params.initialization_options["api_key"]
+            global BasicChainOpenrouter
+            from chains.BasicChainOpenrouter import BasicChainOpenrouter
 
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
@@ -255,11 +81,11 @@ def main():
 
             raise RuntimeError(f"couldnt run init_ai for following reason : {e}") from e
 
-        timeout_ms = params.initialization_options["timeout_ms"]
-        show_progress = params.initialization_options["show_progress"]
-        show_progress_every_ms = params.initialization_options["show_progress_every_ms"]
-        debounce_ms = params.initialization_options["debounce_ms"]
-        max_file_size = params.initialization_options["max_file_size"]
+        os.environ['timeout_ms'] = params.initialization_options["timeout_ms"]
+        os.environ['show_progress'] = params.initialization_options["show_progress"]
+        os.environ['show_progress_every_ms'] = params.initialization_options["show_progress_every_ms"]
+        os.environ['debounce_ms'] = params.initialization_options["debounce_ms"]
+        os.environ['max_file_size'] = params.initialization_options["max_file_size"]
 
 
 
