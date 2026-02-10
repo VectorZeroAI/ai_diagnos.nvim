@@ -55,6 +55,7 @@ class AI_diagnos_lsp(LanguageServer):
                     datefmt='%H:%M:%S'
                     )
         self.last_diagnostic_time = 0
+        self.config = {}
 
     def BasicDiagnose(self, doc: TextDocument):
 
@@ -102,6 +103,17 @@ def main():
         os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
         os.environ['debounce_ms'] = str(params.initialization_options["debounce_ms"])
         os.environ['max_file_size'] = str(params.initialization_options["max_file_size"])
+
+        ls.config = {
+                "model_openrouter" : str(params.initialization_options["model"]), 
+                "api_key_openrouter": str(params.initialization_options["api_key"]),
+                "timeout_ms" :  str(params.initialization_options["timeout_ms"]),
+                "show_progress" :  str(params.initialization_options["show_progress"]),
+                "show_progress_every_ms" :  str(params.initialization_options["show_progress_every_ms"]),
+                "debounce_ms" :  str(params.initialization_options["debounce_ms"]),
+                "max_file_size" :  str(params.initialization_options["max_file_size"]),
+                }
+
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):

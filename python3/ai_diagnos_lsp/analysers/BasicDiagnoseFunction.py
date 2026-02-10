@@ -90,7 +90,7 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
 
     timeout_ms_as_str = os.getenv('timeout_ms')
     assert timeout_ms_as_str is not None
-    timeout_ms = int(timeout_ms_as_str)
+    timeout = int(timeout_ms_as_str)
 
     model = os.getenv('model_openrouter')
     assert model is not None
@@ -113,11 +113,12 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
 
     threading.Thread(target=LangchainInvokingThread, args=(document,)).start()
 
-    if timeout_ms / 1000 > threading.TIMEOUT_MAX:
-        timeout_ms = threading.TIMEOUT_MAX * 1000
+#    if timeout_ms > threading.TIMEOUT_MAX:
+#        timeout_ms = threading.TIMEOUT_MAX
+
         
-    if langchain_completed_event.wait(timeout=timeout_ms / 1000):
-        assert tmp is Iterable
+    if langchain_completed_event.wait():
+        pass
     else:
         ls.window_show_message(types.ShowMessageParams(types.MessageType(2), "Langchain timed out"))
         return
