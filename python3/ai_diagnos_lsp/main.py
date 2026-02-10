@@ -205,7 +205,9 @@ class AI_diagnos_lsp(LanguageServer):
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
                     logging.info(f"published the following diagnostics {diagnostics} for document {document.uri}")
                 return logging.info("Worker thread ending")
+            my_ls.workspace_diagnostic_refresh(None).result()
             return logging.warning("Worker thread ending without publishing diagnostics")
+            
 
 
 
