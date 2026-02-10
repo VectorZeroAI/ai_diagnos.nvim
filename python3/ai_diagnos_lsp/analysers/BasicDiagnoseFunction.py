@@ -1,4 +1,4 @@
-from typing import List, Union, Tuple
+from typing import Iterable, List, Union, Tuple
 from lsprotocol import types
 from pygls.workspace import TextDocument
 import logging
@@ -110,9 +110,14 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
             "file_content": document.source
             })
         langchain_completed_event.set()
+
+    threading.Thread(target=LangchainInvokingThread, args=(document,)).start()
+
+    if timeout_ms / 1000 > threading.TIMEOUT_MAX:
+        timeout_ms = threading.TIMEOUT_MAX * 1000
         
     if langchain_completed_event.wait(timeout=timeout_ms / 1000):
-        pass
+        assert tmp is Iterable
     else:
         ls.window_show_message(types.ShowMessageParams(types.MessageType(2), "Langchain timed out"))
         return

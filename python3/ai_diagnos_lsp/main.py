@@ -102,9 +102,6 @@ def main():
         os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
         os.environ['debounce_ms'] = str(params.initialization_options["debounce_ms"])
         os.environ['max_file_size'] = str(params.initialization_options["max_file_size"])
-        
-
-
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
