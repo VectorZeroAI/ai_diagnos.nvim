@@ -113,9 +113,8 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
 
     threading.Thread(target=LangchainInvokingThread, args=(document,)).start()
 
-#    if timeout_ms > threading.TIMEOUT_MAX:
-#        timeout_ms = threading.TIMEOUT_MAX
-
+    if timeout > threading.TIMEOUT_MAX:
+        timeout = threading.TIMEOUT_MAX
         
     if langchain_completed_event.wait():
         pass
