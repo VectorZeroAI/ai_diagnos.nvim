@@ -114,7 +114,7 @@ def BasicDiagnoseFunction(document: TextDocument, ls):
                     return future.result()
                 await asyncio.sleep(show_progress_every_ms / 1000)  # Check every n seconds
                 if show_progress:
-                    ls.show_message(f"Langchain is still running [{counter}]")
+                    ls.window_show_message(types.ShowMessageParams(types.MessageType(3), f"Langchain is still running [{counter}]"))
                     counter = counter + 1
             
             # Timed out
@@ -180,11 +180,11 @@ def BasicDiagnoseFunction(document: TextDocument, ls):
     _, previous = ls.diagnostics.get(document.uri, (0, []))
     
     if len(document.lines) > max_file_size:
-        ls.show_message("File size is to big. Rejecting")
+        ls.window_show_message(types.ShowMessageParams(types.MessageType(2), "File size is to big. Rejecting"))
         return
 
     if not time.time() - ls.last_diagnostic_time >= debounce_ms / 1000:
-        ls.show_message("Debounced the diagnostic")
+        ls.window_show_message(types.ShowMessageParams(types.MessageType(2), "Debounced the diagnostic"))
         return
 
     threading.Thread(target=BasicDiagnoseFunctionWorker, daemon=True).start()

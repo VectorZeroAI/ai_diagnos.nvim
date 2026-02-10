@@ -16,8 +16,8 @@ from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunction
 
 global BasicDiagnoseFunction
 
-def show_message(my_ls, message_itself: str, severity: int = 3):
-    my_ls.window_show_message(types.ShowMessageParams(type=types.MessageType(severity), message=message_itself))
+def ls.window_show_message(my_ls, message_itself: str, severity: int = 3):
+    my_ls.window_ls.window_show_message(types.ShowMessageParams(type=types.MessageType(severity), message=message_itself))
     # NOTE : Message types : 1 = ERROR , 2 = Warning , 3 = Info , 4 = Hind, 5 = Debug
 
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
@@ -159,7 +159,7 @@ def main():
             assert params[0] is not None
             doc = ls.workspace.get_text_document(params[0])
         except Exception as e:
-            show_message(my_ls, f"Couldnt get the URI parameter due to the following error {e}", 1)
+            ls.window_show_message(f"Couldnt get the URI parameter due to the following error {e}", 1)
             return
         else:
             ls.BasicDiagnoseFunction(doc)
@@ -168,7 +168,7 @@ def main():
     @server.command("Clear.AIDiagnostics")
     def ClearAIDiagnostics(ls: AI_diagnos_lsp):
         ls.diagnostics = {}
-        show_message(ls, "succesfully cleared the diagnostics")
+        ls.window_show_message(ls, "succesfully cleared the diagnostics")
 
     server.start_io()
 
