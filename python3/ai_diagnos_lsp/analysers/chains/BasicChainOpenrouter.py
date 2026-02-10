@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-"""
-This is the place where I will be creating the LLM (s) for the main.py file.
-"""
 
 from typing import List
 from langchain_core.output_parsers import PydanticOutputParser

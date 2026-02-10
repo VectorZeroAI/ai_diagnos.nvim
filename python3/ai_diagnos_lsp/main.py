@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import threading
 from typing import List, Sequence, Union, Tuple, Any
 from pygls.lsp.server import LanguageServer
 
@@ -12,7 +13,8 @@ import logging
 
 from pygls.workspace import TextDocument
 
-global BasicDiagnoseFunction
+import time
+
 
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
     """
@@ -54,9 +56,28 @@ class AI_diagnos_lsp(LanguageServer):
                     )
         self.last_diagnostic_time = 0
 
-    def BasicDiagnoseFunction(self, doc: TextDocument):
-        global BasicDiagnoseFunction
-        BasicDiagnoseFunction(document = doc, ls = self)
+    def BasicDiagnose(self, doc: TextDocument):
+
+        max_file_size = os.getenv('max_file_size')
+        assert max_file_size is not None
+        max_file_size = int(max_file_size)
+
+        debounce_ms = os.getenv('debounce_ms')
+        assert debounce_ms is not None
+        debounce_ms = int(debounce_ms)
+        
+
+        if len(doc.lines) > max_file_size:
+            self.window_show_message(types.ShowMessageParams(types.MessageType(2), "File size is to big. Rejecting"))
+            return
+
+        if not time.time() - self.last_diagnostic_time >= debounce_ms / 1000:
+            self.window_show_message(types.ShowMessageParams(types.MessageType(2), "Debounced the diagnostic"))
+            return
+
+        from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunctionWorker
+
+        threading.Thread(target=BasicDiagnoseFunctionWorker, args=(doc, self)).start()
 
 def main():
     server = AI_diagnos_lsp('ai_diagnos', "v0.6 DEV")
@@ -65,27 +86,23 @@ def main():
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
 
         assert params.initialization_options is not None
-        global BasicDiagnoseFunction
 
+        assert params.initialization_options["model"] is not None
+        assert params.initialization_options["api_key"] is not None
+        assert params.initialization_options["timeout_ms"] is not None
+        assert params.initialization_options["show_progress"] is not None
+        assert params.initialization_options["show_progress_every_ms"] is not None
+        assert params.initialization_options["debounce_ms"] is not None
+        assert params.initialization_options["max_file_size"] is not None
 
-        from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunction as BasicDiagnoseFunction
-
-        try:
-
-            os.environ['model_openrouter'] = params.initialization_options["model"]
-            os.environ['api_key_openrouter'] = params.initialization_options["api_key"]
-
-        except Exception as e:
-            if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.error(f"couldnt run init_ai for following reason : {e}")
-
-            raise RuntimeError(f"couldnt run init_ai for following reason : {e}") from e
-
-        os.environ['timeout_ms'] = params.initialization_options["timeout_ms"]
-        os.environ['show_progress'] = params.initialization_options["show_progress"]
-        os.environ['show_progress_every_ms'] = params.initialization_options["show_progress_every_ms"]
-        os.environ['debounce_ms'] = params.initialization_options["debounce_ms"]
-        os.environ['max_file_size'] = params.initialization_options["max_file_size"]
+        os.environ['model_openrouter'] = str(params.initialization_options["model"])
+        os.environ['api_key_openrouter'] = str(params.initialization_options["api_key"])
+        os.environ['timeout_ms'] = str(params.initialization_options["timeout_ms"])
+        os.environ['show_progress'] = str(params.initialization_options["show_progress"])
+        os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
+        os.environ['debounce_ms'] = str(params.initialization_options["debounce_ms"])
+        os.environ['max_file_size'] = str(params.initialization_options["max_file_size"])
+        
 
 
 
@@ -93,13 +110,13 @@ def main():
     def did_open(ls: AI_diagnos_lsp, params: types.DidOpenTextDocumentParams):
         """ Diagnose each document when it is opened """
         doc = ls.workspace.get_text_document(params.text_document.uri)
-        ls.BasicDiagnoseFunction(doc)
+        ls.BasicDiagnose(doc)
 
     @server.feature(types.TEXT_DOCUMENT_DID_SAVE)
     def did_save(ls: AI_diagnos_lsp, params: types.DidSaveTextDocumentParams):
         """ Diagnose each document when it is saved, e.g. on save. As was done by the previous version of the plugin """
         doc = ls.workspace.get_text_document(params.text_document.uri)
-        ls.BasicDiagnoseFunction(doc)
+        ls.BasicDiagnose(doc)
 
     @server.feature(
             types.TEXT_DOCUMENT_DIAGNOSTIC,
@@ -159,7 +176,7 @@ def main():
             ls.window_show_message(types.ShowMessageParams(types.MessageType(1), "Couldnt get the URI parameter due to the following error {e}"))
             return
         else:
-            ls.BasicDiagnoseFunction(doc)
+            ls.BasicDiagnose(doc)
             # TODO : Add good logging
     
     @server.command("Clear.AIDiagnostics")

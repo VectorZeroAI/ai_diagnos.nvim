@@ -1,5 +1,6 @@
+from concurrent.futures import Future
 import time
-from typing import List, Union, Tuple
+from typing import Any, List, Union, Tuple
 from lsprotocol import types
 from pygls.workspace import TextDocument
 import logging
@@ -7,23 +8,20 @@ import os
 import asyncio
 import threading
 
-from chains.BasicChainOpenrouter import BasicChainOpenrouter
+from ai_diagnos_lsp.analysers.chains.BasicChainOpenrouter import BasicChainOpenrouter
 
 import re
 
 def BasicDiagnoseFunction(document: TextDocument, ls):
+    diagnostics_result: Future[List[Any]] = Future()
     diagnostics = []
+
     severity_map = {
             1: types.DiagnosticSeverity.Error,
             2: types.DiagnosticSeverity.Warning,
             3: types.DiagnosticSeverity.Information,
             4: types.DiagnosticSeverity.Hint
             }
-    
-    debounce_ms_as_string = os.getenv('debounce_ms')
-    assert debounce_ms_as_string is not None
-    debounce_ms = int(debounce_ms_as_string)
-    
     if os.getenv("AI_DIAGNOS_LOG") is not None:
         logging.basicConfig(
                 filename="ai_diagnos_lsp.log",
@@ -31,6 +29,10 @@ def BasicDiagnoseFunction(document: TextDocument, ls):
                 format='%(asctime)s [%(levelname)s] %(message)s',
                 datefmt='%H:%M:%S'
                 )
+    
+    debounce_ms_as_string = os.getenv('debounce_ms')
+    assert debounce_ms_as_string is not None
+    debounce_ms = int(debounce_ms_as_string)
 
     if os.getenv("AI_DIAGNOS_LOG") is not None:
         logging.info(f"debounce ms recieved = {debounce_ms}")
@@ -53,10 +55,7 @@ def BasicDiagnoseFunction(document: TextDocument, ls):
     assert max_file_size_as_string is not None
     max_file_size = int(max_file_size_as_string)
 
-    if os.getenv("AI_DIAGNOS_LOG") is not None:
-        logging.info(f"debounce ms recieved = {max_file_size}")
 
-    
     def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
         """
         Search for a pattern and return (line_number, character_position) for each match.
@@ -85,6 +84,9 @@ def BasicDiagnoseFunction(document: TextDocument, ls):
         return matches
 
     def BasicDiagnoseFunctionWorker(ls = ls):
+
+        if os.getenv("AI_DIAGNOS_LOG") is not None:
+            logging.info(f"debounce ms recieved = {max_file_size}")
 
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.info("starting the chain")
@@ -129,7 +131,7 @@ def BasicDiagnoseFunction(document: TextDocument, ls):
         tmp = asyncio.run(GeneralAnalysisChainInvokation())
         
         if tmp is None:
-            return
+            raise RuntimeError("Langchain Async call finished but produced absolutely nothing")
 
         for i in tmp.diagnostics:
             try:
@@ -156,15 +158,20 @@ def BasicDiagnoseFunction(document: TextDocument, ls):
 
             diagnostics.append(
                     types.Diagnostic(
-                        message=i.error_message + "      [AI GENERATED]",
+                        message=i.error_message,
                         severity=severity_level_converted,
                         range=types.Range(
                             start=types.Position(pos_line, pos_char),
                             end=types.Position(pos_line, pos_char)
                             ), 
-                        source="AI diagnos LSP"
+                        source="AI diagnos LSP",
+                        tags = [
+                                types.DiagnosticTag("AI")
+                            ]
                         )
                     )
+
+        _, previous = ls.diagnostics.get(document.uri, (0, []))
         
         if previous != diagnostics:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
@@ -176,13 +183,13 @@ def BasicDiagnoseFunction(document: TextDocument, ls):
                 logging.info(f"published the following diagnostics {diagnostics} for document {document.uri}")
 
             ls.workspace_diagnostic_refresh(None).result()
+            diagnostics_result.set_result(diagnostics)
+
             return logging.info("Worker thread ending")
 
         return logging.warning("Worker thread ending without publishing diagnostics")
 
 
-    _, previous = ls.diagnostics.get(document.uri, (0, []))
-    
     if len(document.lines) > max_file_size:
         ls.window_show_message(types.ShowMessageParams(types.MessageType(2), "File size is to big. Rejecting"))
         return
@@ -191,5 +198,8 @@ def BasicDiagnoseFunction(document: TextDocument, ls):
         ls.window_show_message(types.ShowMessageParams(types.MessageType(2), "Debounced the diagnostic"))
         return
 
-    threading.Thread(target=BasicDiagnoseFunctionWorker, daemon=True).start()
+    threading.Thread(target=BasicDiagnoseFunctionWorker).start()
+    diagnostics_result.result()
     return
+
+
