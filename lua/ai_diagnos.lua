@@ -53,7 +53,7 @@ function M.setup(user_config)
                 filetypes = M.config.filetypes,
                 root_dir = M.config.root_dir,
                 settings = M.config.settings,
-                name = "ai_diagnos_lsp",
+                name = "ai-lsp",
             },
         }
     end
@@ -61,7 +61,7 @@ function M.setup(user_config)
     -- Setup the LSP client
     local success = pcall(function ()
             lspconfig.ai_diagnos.setup({
-                name = "ai_diagnos_lsp",
+                name = "ai-lsp",
                 cmd = M.config.cmd,
                 filetypes = M.config.filetypes,
                 root_dir = M.config.root_dir,
@@ -90,20 +90,20 @@ function M.setup(user_config)
         callback=function (args)
             local client = vim.lsp.get_client_by_id(args.data.client_id)
             if client then
-                if client.name == "ai_diagnos_lsp" then
+                if client.name == "ai-lsp" then
 
-                    local ns = vim.lsp.diagnostic.get_namespace(client.id, true)
-                    vim.diagnostic.config({
-                        signs = {
-                            text = {
-                                [vim.diagnostic.severity.ERROR] = M.config.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.WARN]  = M.config.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.INFO]  = M.config.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.HINT]  = M.config.ai_diagnostics_symbol,
-                                -- TODO : Add more options on how to display the AI diagnostics
-                            },
-                        },
-                    }, ns)
+--                    local ns = vim.lsp.diagnostic.get_namespace(client.id, true)
+--                    vim.diagnostic.config({
+--                        signs = {
+--                            text = {
+--                                [vim.diagnostic.severity.ERROR] = M.config.ai_diagnostics_symbol,
+--                                [vim.diagnostic.severity.WARN]  = M.config.ai_diagnostics_symbol,
+--                                [vim.diagnostic.severity.INFO]  = M.config.ai_diagnostics_symbol,
+--                                [vim.diagnostic.severity.HINT]  = M.config.ai_diagnostics_symbol,
+--                                -- TODO : Add more options on how to display the AI diagnostics
+--                            },
+--                        },
+--                    }, ns)
 
                     vim.api.nvim_create_user_command("AIAnalyse", function()
                         local uri = vim.uri_from_bufnr(0)
