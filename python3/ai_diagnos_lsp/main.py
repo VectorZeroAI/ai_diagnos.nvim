@@ -14,12 +14,6 @@ from pygls.workspace import TextDocument
 
 from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunction as BasicDiagnoseFunction
 
-global BasicDiagnoseFunction
-
-def ls.window_show_message(my_ls, message_itself: str, severity: int = 3):
-    my_ls.window_ls.window_show_message(types.ShowMessageParams(type=types.MessageType(severity), message=message_itself))
-    # NOTE : Message types : 1 = ERROR , 2 = Warning , 3 = Info , 4 = Hind, 5 = Debug
-
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
     """
     Search for a pattern and return (line_number, character_position) for each match.
@@ -66,7 +60,7 @@ class AI_diagnos_lsp(LanguageServer):
         BasicDiagnoseFunction(document = doc, ls = self)
 
 def main():
-    server = AI_diagnos_lsp('ai_diagnos', "v0.5 DEV")
+    server = AI_diagnos_lsp('ai_diagnos', "v0.6 DEV")
     
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
