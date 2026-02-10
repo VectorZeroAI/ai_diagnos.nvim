@@ -10,6 +10,12 @@ import os
 
 import logging
 
+from pygls.workspace import TextDocument
+
+from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunction as BasicDiagnoseFunction
+
+global BasicDiagnoseFunction
+
 def show_message(my_ls, message_itself: str, severity: int = 3):
     my_ls.window_show_message(types.ShowMessageParams(type=types.MessageType(severity), message=message_itself))
     # NOTE : Message types : 1 = ERROR , 2 = Warning , 3 = Info , 4 = Hind, 5 = Debug
@@ -42,6 +48,7 @@ def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) 
     return matches
 
 class AI_diagnos_lsp(LanguageServer):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.diagnostics = {}
@@ -54,8 +61,9 @@ class AI_diagnos_lsp(LanguageServer):
                     )
         self.last_diagnostic_time = 0
 
-    from ai_diagnos_lsp. import BasicDiagnoseFunction
-
+    def BasicDiagnoseFunction(self, doc: TextDocument):
+        global BasicDiagnoseFunction
+        BasicDiagnoseFunction(document = doc, ls = self)
 
 def main():
     server = AI_diagnos_lsp('ai_diagnos', "v0.5 DEV")
@@ -63,17 +71,12 @@ def main():
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
 
-        global my_ls
-        my_ls = ls
-
         assert params.initialization_options is not None
 
         try:
 
             os.environ['model_openrouter'] = params.initialization_options["model"]
             os.environ['api_key_openrouter'] = params.initialization_options["api_key"]
-            global BasicChainOpenrouter
-            from chains.BasicChainOpenrouter import BasicChainOpenrouter
 
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
