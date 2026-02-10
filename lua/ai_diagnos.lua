@@ -86,36 +86,55 @@ function M.setup(user_config)
         })
     end
 
-    vim.api.nvim_create_user_command("AIAnalyse", function()
-        local clients = vim.lsp.get_clients({ bufnr = 0, name = "ai_diagnos_lsp" })
-        
-        local uri = vim.uri_from_bufnr(0)
+    vim.api.nvim_create_autocmd("LspAttach",{
+        callback=function (args)
+            local client = vim.lsp.get_client_by_id(args.data.client_id)
+            if client then
+                if client.name == "ai_diagnos_lsp" then
 
-        if clients[1] then
-            clients[1]:exec_cmd({ 
-                title="Analyse the current buffer with AI, e.g. basic parse.",
-                command="Analyse.Document",
-                arguments={
-                    uri
-                }
-            })
-        else
-            vim.notify("LSP not attached", vim.log.levels.WARN)
-        end
-    end, {})
+                    local ns = vim.lsp.diagnostic.get_namespace(client.id, true)
+                    vim.diagnostic.config({
+                        signs = {
+                            text = {
+                                [vim.diagnostic.severity.ERROR] = M.config.ai_diagnostics_symbol,
+                                [vim.diagnostic.severity.WARN]  = M.config.ai_diagnostics_symbol,
+                                [vim.diagnostic.severity.INFO]  = M.config.ai_diagnostics_symbol,
+                                [vim.diagnostic.severity.HINT]  = M.config.ai_diagnostics_symbol,
+                                -- TODO : Add more options on how to display the AI diagnostics
+                            },
+                        },
+                    }, ns)
 
-    vim.api.nvim_create_user_command("AIClear", function ()
-        local clients = vim.lsp.get_clients({ bufnr = 0, name = "ai_diagnos_lsp" })
-        
-        if clients[1] then
-            clients[1]:exec_cmd({ 
-                title="Clear the AI diagnostics",
-                command="Clear.AIDiagnostics"
-            })
-        else
-            vim.notify("LSP not attached", vim.log.levels.WARN)
+                    vim.api.nvim_create_user_command("AIAnalyse", function()
+                        local uri = vim.uri_from_bufnr(0)
+
+                        client:exec_cmd({ 
+                            title="Analyse the current buffer with AI, e.g. basic parse.",
+                            command="Analyse.Document",
+                            arguments={
+                                uri
+                            }
+                        })
+                    end, {})
+
+                    vim.api.nvim_create_user_command("AIClear", function ()
+                        client:exec_cmd({
+                            title="Clear the AI diagnostics",
+                            command="Clear.AIDiagnostics"
+                        })
+                    end, {})
+
+                end
+            else
+                print(" No LSP client found ")
+            end
+
+
         end
-    end, {})
+    })
+        
+
+
 end
 
 function M.build()
