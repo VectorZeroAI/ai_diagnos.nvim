@@ -63,12 +63,18 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
             model_gemini = ls.config["model_gemini"]
             api_key_gemini = ls.config["api_key_gemini"]
 
+            try:
+                fallback_models_gemini = ls.config["fallback_models_gemini"]
+            except Exception:
+                fallback_models_gemini = None
+
 
             BasicChain = BasicChainOmniproviderFactory(
                     model_openrouter=model_openrouter,
                     api_key_openrouter=api_key_openrouter,
                     api_key_gemini=api_key_gemini,
-                    model_gemini=model_gemini
+                    model_gemini=model_gemini,
+                    fallback_models_gemini=fallback_models_gemini
                     )
 
         elif ls.config["use_gemini"]:
