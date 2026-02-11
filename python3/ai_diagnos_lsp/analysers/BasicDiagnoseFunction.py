@@ -1,4 +1,5 @@
 import time
+from typing import Tuple
 from lsprotocol import types
 from pygls.workspace import TextDocument
 import logging
@@ -169,7 +170,11 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
                     logging.info("searching the file with grep. ")
                     logging.info(f"searching for : {i.location} ; in {document.uri}")
-                pos = grep(i.location, document.source)[0]
+                
+                if isinstance(i.location, Tuple):
+                    pos = grep(i.location[0], document.source)[i.location[1] - 1]
+                else:
+                    pos = grep(i.location, document.source)[0]
                 pos_line = pos[0]
                 pos_char = pos[1]
                 if os.getenv("AI_DIAGNOS_LOG") is not None:

@@ -1,13 +1,13 @@
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel
 
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 def GeneralDiagnosticsOutputParserFactory() -> PydanticOutputParser:
     class DiagnosticsPydanticObjekt(BaseModel):
         class SingleDiagnostic(BaseModel):
 
-            location: Tuple[str, int] | str
+            location: Union[Tuple[str, int], str]
             error_message: str
             severity_level: int
 
