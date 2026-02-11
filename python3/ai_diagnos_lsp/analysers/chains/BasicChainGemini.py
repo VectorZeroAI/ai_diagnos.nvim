@@ -9,6 +9,17 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel, SecretStr
 from pathlib import Path
 
+from ai_diagnos_lsp.analysers.chains.BasicAnalysisPrompt import GeneralAnalysisPromptFactory
+from ai_diagnos_lsp.analysers.chains.GeneralDiagnosticsPydanticOutputParser import GeneralDiagnosticsOutputParserFactory
+
+def GeminiLlmFactory(model_gemini: str, api_key_gemini: str) -> ChatGoogleGenerativeAI:
+    llm = ChatGoogleGenerativeAI(
+            model=model_gemini,
+            api_key=SecretStr(api_key_gemini),
+            )
+    return llm
+    
+
 def BasicChainGeminiFactory(model_gemini: str, api_key_gemini: str) -> RunnableSerializable[dict[Any, Any], Any]:
 
     model_gemini = model_gemini
@@ -16,37 +27,13 @@ def BasicChainGeminiFactory(model_gemini: str, api_key_gemini: str) -> RunnableS
     api_key_gemini = api_key_gemini
     assert api_key_gemini is not None
 
-    llm = ChatGoogleGenerativeAI(
-            model=model_gemini,
-            base_url="https://openrouter.ai/api/v1/",
-            api_key=SecretStr(api_key_gemini)
-            )
+    llm = GeminiLlmFactory(model_gemini, api_key_gemini)
 
-    try:
-        with open(f"{Path(__file__).absolute().resolve().parent}/prompts/general_analysis_system_prompt.txt", "r") as f:
-            GENERAL_ANALYSIS_SYSTEM_PROMPT = f.read()
-    except FileNotFoundError as e:
-        raise NotImplementedError("The prompt file is missing.") from e
+    general_analysis_prompt = GeneralAnalysisPromptFactory()
 
-    GeneralAnalysisPrompt = ChatPromptTemplate.from_messages([
-            ("system", f"{GENERAL_ANALYSIS_SYSTEM_PROMPT}"),
-            ("human", "\n{{file_content}}\n\n"),
-            ], template_format="mustache")
+    GeneralDiagnosticsOutputParser = GeneralDiagnosticsOutputParserFactory()
 
-    class DiagnosticsPydanticObjekt(BaseModel):
-        class SingleDiagnostic(BaseModel):
-
-            location: str
-            error_message: str
-            severity_level: int
-
-        class Config:
-            populate_by_name = True
-
-        diagnostics: List[SingleDiagnostic]
-
-    GeneralDiagnosticsOutputParser = PydanticOutputParser(pydantic_object=DiagnosticsPydanticObjekt)
-
-    BasicChainGemini = GeneralAnalysisPrompt | llm | GeneralDiagnosticsOutputParser
+    BasicChainGemini = general_analysis_prompt | llm | GeneralDiagnosticsOutputParser
 
     return BasicChainGemini
+

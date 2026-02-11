@@ -9,18 +9,17 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, SecretStr
 from pathlib import Path
 
-def BasicChainOpenrouterFactory(model: str, api_key: str) -> RunnableSerializable[dict[Any, Any], Any]:
-
-    model = model
-    assert model is not None
-    api_key_openrouter = api_key
-    assert api_key_openrouter is not None
-
-    Llm = ChatOpenAI(
-            model=model,
+def OpenrouterLlmFactory(model_openrouter: str, api_key_openrouter: str) -> ChatOpenAI:
+    llm = ChatOpenAI(
+            model=model_openrouter,
             base_url="https://openrouter.ai/api/v1/",
             api_key=SecretStr(api_key_openrouter)
             )
+    return llm
+
+def BasicChainOpenrouterFactory(model_openrouter: str, api_key_openrouter: str) -> RunnableSerializable[dict[Any, Any], Any]:
+
+    Llm = OpenrouterLlmFactory(model_openrouter, api_key_openrouter)
 
     try:
         with open(f"{Path(__file__).absolute().resolve().parent}/prompts/general_analysis_system_prompt.txt", "r") as f:

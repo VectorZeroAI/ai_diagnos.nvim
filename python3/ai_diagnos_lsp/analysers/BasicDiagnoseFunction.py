@@ -99,7 +99,7 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
         api_key = os.getenv('api_key_openrouter')
         assert api_key is not None
 
-        BasicChainOpenrouter = BasicChainOpenrouterFactory(model=model, api_key=api_key)
+        BasicChainOpenrouter = BasicChainOpenrouterFactory(model_openrouter=model, api_key_openrouter=api_key)
 
         langchain_completed_event = threading.Event()
         langchain_timed_out = threading.Event()
