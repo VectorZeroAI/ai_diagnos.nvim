@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 import threading
-from typing import List, Sequence, Union, Tuple, Any
+from typing import Sequence, Any
 from pygls.lsp.server import LanguageServer
 
 from lsprotocol import types
 
-import re
 import os
 
 import logging
@@ -14,34 +13,6 @@ import logging
 from pygls.workspace import TextDocument
 
 import time
-
-
-def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
-    """
-    Search for a pattern and return (line_number, character_position) for each match.
-    
-    Args:
-        pattern: The pattern to search for
-        lines: List of strings or a multi-line string
-        ignore_case: Case-insensitive matching
-    
-    Returns:
-        List of (line_number, character_position) tuples
-    """
-    # Convert string to list if needed
-    if isinstance(lines, str):
-        lines = lines.splitlines()
-    
-    flags = re.IGNORECASE if ignore_case else 0
-    regex = re.compile(pattern, flags)
-    
-    matches = []
-    
-    for line_num, line in enumerate(lines, start=0):
-        for match in regex.finditer(line):
-            matches.append((line_num, match.start()))
-    
-    return matches
 
 class AI_diagnos_lsp(LanguageServer):
     def __init__(self, *args, **kwargs):
@@ -63,7 +34,6 @@ class AI_diagnos_lsp(LanguageServer):
 
         debounce_ms = self.config["debounce_ms"]
         
-
         if len(doc.lines) > max_file_size:
             self.window_show_message(types.ShowMessageParams(types.MessageType(2), "File size is to big. Rejecting"))
             return
@@ -78,7 +48,7 @@ class AI_diagnos_lsp(LanguageServer):
         self.last_diagnostic_time = time.time()
 
 def main():
-    server = AI_diagnos_lsp('ai_diagnos', "v0.6 DEV")
+    server = AI_diagnos_lsp('ai_diagnos', "v0.7 DEV")
     
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
