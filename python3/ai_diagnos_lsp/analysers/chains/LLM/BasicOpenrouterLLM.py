@@ -7,6 +7,7 @@ def OpenrouterLlmFactory(model_openrouter: str, api_key_openrouter: str) -> Chat
     llm = ChatOpenAI(
             model=model_openrouter,
             base_url="https://openrouter.ai/api/v1/",
-            api_key=SecretStr(api_key_openrouter)
+            api_key=SecretStr(api_key_openrouter),
+            max_retries=0
             )
     return llm
