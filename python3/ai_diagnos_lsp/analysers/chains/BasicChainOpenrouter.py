@@ -4,18 +4,12 @@ from typing import List, Any
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableSerializable
-from langchain_openai import ChatOpenAI
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel
 from pathlib import Path
 
-def OpenrouterLlmFactory(model_openrouter: str, api_key_openrouter: str) -> ChatOpenAI:
-    llm = ChatOpenAI(
-            model=model_openrouter,
-            base_url="https://openrouter.ai/api/v1/",
-            api_key=SecretStr(api_key_openrouter)
-            )
-    return llm
+from ai_diagnos_lsp.analysers.chains.LLM.BasicOpenrouterLLM import OpenrouterLlmFactory
+
 
 def BasicChainOpenrouterFactory(model_openrouter: str, api_key_openrouter: str) -> RunnableSerializable[dict[Any, Any], Any]:
 

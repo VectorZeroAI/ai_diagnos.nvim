@@ -1,9 +1,9 @@
-
+#!/usr/bin/env python
 from pathlib import Path
 
 from langchain_core.prompts import ChatPromptTemplate
 
-def GeneralAnalysisPromptFactory() -> ChatPromptTemplate:
+def BasicAnalysisPromptFactory() -> ChatPromptTemplate:
     try:
         with open(f"{Path(__file__).absolute().resolve().parent}/prompts/general_analysis_system_prompt.txt", "r") as f:
             GENERAL_ANALYSIS_SYSTEM_PROMPT = f.read()
