@@ -49,7 +49,7 @@ function M.setup(user_config)
                 api_key_openrouter = user_config.api_key_openrouter,
                 api_key_gemini = user_config.api_key_gemini,
                 timeout = user_config.timeout or default_config.timeout,
-                model_openrouter = user_config.model or default_config.model_openrouter,
+                model_openrouter = user_config.model_openrouter or default_config.model_openrouter,
                 debounce_ms = user_config.debounce_ms or default_config.debounce_ms,
                 max_file_size = user_config.max_file_size or default_config.max_file_size,
                 show_progress = user_config.show_progress or default_config.show_progress,
@@ -71,7 +71,7 @@ function M.setup(user_config)
                 cmd = M.config.cmd,
                 filetypes = M.config.filetypes,
                 root_dir = M.config.root_dir,
-                settings = M.config.settings,
+                settings = {},
                 name = "ai-lsp",
             },
         }
@@ -126,8 +126,7 @@ function M.setup(user_config)
 
                     vim.api.nvim_create_user_command("AIAnalyse", function()
                         local uri = vim.lsp.util.make_text_document_params().uri
-
-                        client:exec_cmd({ 
+                        client:exec_cmd({
                             title="Analyse the current buffer with AI, e.g. basic parse.",
                             command="Analyse.Document",
                             arguments={
@@ -137,9 +136,20 @@ function M.setup(user_config)
                     end, {})
 
                     vim.api.nvim_create_user_command("AIClear", function ()
+                        local uri = vim.lsp.util.make_text_document_params().uri
                         client:exec_cmd({
-                            title="Clear the AI diagnostics",
-                            command="Clear.AIDiagnostics"
+                            title="Clear the AI diagnostics on the current buffer",
+                            command="Clear.AIDiagnostics",
+                            arguments={
+                                uri
+                            }
+                        })
+                    end, {})
+
+                    vim.api.nvim_create_user_command("AIClearAll", function ()
+                        client:exec_cmd({
+                            title="Clear ALL the AI diagnostics across all documents",
+                            command="Clear.AIDiagnostics.All",
                         })
                     end, {})
 
