@@ -88,16 +88,18 @@ def main():
 
         assert params.initialization_options is not None
 
-        assert params.initialization_options["model"] is not None
-        assert params.initialization_options["api_key"] is not None
+        assert params.initialization_options["model_openrouter"] is not None
+        assert params.initialization_options["api_key_openrouter"] is not None
         assert params.initialization_options["timeout"] is not None
         assert params.initialization_options["show_progress"] is not None
         assert params.initialization_options["show_progress_every_ms"] is not None
         assert params.initialization_options["debounce_ms"] is not None
         assert params.initialization_options["max_file_size"] is not None
+        assert params.initialization_options["model_gemini"] is not None
+        assert params.initialization_options["api_key_gemini"] is not None
 
-        os.environ['model_openrouter'] = str(params.initialization_options["model"])
-        os.environ['api_key_openrouter'] = str(params.initialization_options["api_key"])
+        os.environ['model_openrouter'] = str(params.initialization_options["model_openrouter"])
+        os.environ['api_key_openrouter'] = str(params.initialization_options["api_key_openrouter"])
         os.environ['timeout'] = str(params.initialization_options["timeout"])
         os.environ['show_progress'] = str(params.initialization_options["show_progress"])
         os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
@@ -107,11 +109,13 @@ def main():
         ls.config = {
                 "model_openrouter" : str(params.initialization_options["model"]), 
                 "api_key_openrouter": str(params.initialization_options["api_key"]),
-                "timeout" :  str(params.initialization_options["timeout"]),
-                "show_progress" :  str(params.initialization_options["show_progress"]),
-                "show_progress_every_ms" :  str(params.initialization_options["show_progress_every_ms"]),
-                "debounce_ms" :  str(params.initialization_options["debounce_ms"]),
-                "max_file_size" :  str(params.initialization_options["max_file_size"]),
+                "timeout" :  params.initialization_options["timeout"],
+                "show_progress" :  params.initialization_options["show_progress"],
+                "show_progress_every_ms" :  params.initialization_options["show_progress_every_ms"],
+                "debounce_ms" :  params.initialization_options["debounce_ms"],
+                "max_file_size" : params.initialization_options["max_file_size"],
+                "api_key_gemini" : params.initialization_options["api_key_gemini"],
+                "model_gemini" : params.initialization_options["model_gemini"]
                 }
 
 
