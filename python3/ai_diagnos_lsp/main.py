@@ -87,36 +87,97 @@ def main():
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
 
         assert params.initialization_options is not None
+        if params.initialization_options["use_omniprovider"]:
 
-        assert params.initialization_options["model_openrouter"] is not None
-        assert params.initialization_options["api_key_openrouter"] is not None
-        assert params.initialization_options["timeout"] is not None
-        assert params.initialization_options["show_progress"] is not None
-        assert params.initialization_options["show_progress_every_ms"] is not None
-        assert params.initialization_options["debounce_ms"] is not None
-        assert params.initialization_options["max_file_size"] is not None
-        assert params.initialization_options["model_gemini"] is not None
-        assert params.initialization_options["api_key_gemini"] is not None
+            assert params.initialization_options["model_openrouter"] is not None
+            assert params.initialization_options["api_key_openrouter"] is not None
+            assert params.initialization_options["timeout"] is not None
+            assert params.initialization_options["show_progress"] is not None
+            assert params.initialization_options["show_progress_every_ms"] is not None
+            assert params.initialization_options["debounce_ms"] is not None
+            assert params.initialization_options["max_file_size"] is not None
+            assert params.initialization_options["model_gemini"] is not None
+            assert params.initialization_options["api_key_gemini"] is not None
 
-        os.environ['model_openrouter'] = str(params.initialization_options["model_openrouter"])
-        os.environ['api_key_openrouter'] = str(params.initialization_options["api_key_openrouter"])
-        os.environ['timeout'] = str(params.initialization_options["timeout"])
-        os.environ['show_progress'] = str(params.initialization_options["show_progress"])
-        os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
-        os.environ['debounce_ms'] = str(params.initialization_options["debounce_ms"])
-        os.environ['max_file_size'] = str(params.initialization_options["max_file_size"])
+            os.environ['model_openrouter'] = str(params.initialization_options["model_openrouter"])
+            os.environ['api_key_openrouter'] = str(params.initialization_options["api_key_openrouter"])
+            os.environ['timeout'] = str(params.initialization_options["timeout"])
+            os.environ['show_progress'] = str(params.initialization_options["show_progress"])
+            os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
+            os.environ['debounce_ms'] = str(params.initialization_options["debounce_ms"])
+            os.environ['max_file_size'] = str(params.initialization_options["max_file_size"])
 
-        ls.config = {
-                "model_openrouter" : str(params.initialization_options["model"]), 
-                "api_key_openrouter": str(params.initialization_options["api_key"]),
-                "timeout" :  params.initialization_options["timeout"],
-                "show_progress" :  params.initialization_options["show_progress"],
-                "show_progress_every_ms" :  params.initialization_options["show_progress_every_ms"],
-                "debounce_ms" :  params.initialization_options["debounce_ms"],
-                "max_file_size" : params.initialization_options["max_file_size"],
-                "api_key_gemini" : params.initialization_options["api_key_gemini"],
-                "model_gemini" : params.initialization_options["model_gemini"]
-                }
+            ls.config = {
+                    "model_openrouter" : str(params.initialization_options["model"]), 
+                    "api_key_openrouter": str(params.initialization_options["api_key"]),
+                    "timeout" :  params.initialization_options["timeout"],
+                    "show_progress" :  params.initialization_options["show_progress"],
+                    "show_progress_every_ms" :  params.initialization_options["show_progress_every_ms"],
+                    "debounce_ms" :  params.initialization_options["debounce_ms"],
+                    "max_file_size" : params.initialization_options["max_file_size"],
+                    "api_key_gemini" : params.initialization_options["api_key_gemini"],
+                    "model_gemini" : params.initialization_options["model_gemini"],
+                    "use_gemini" : params.initialization_options["use_gemini"],
+                    "use_omniprovider" : params.initialization_options["use_omniprovider"],
+                    "use_openrouter" : params.initialization_options["use_openrouter"]
+                    }
+
+        elif params.initialization_options["use_gemini"]:
+            assert params.initialization_options["timeout"] is not None
+            assert params.initialization_options["show_progress"] is not None
+            assert params.initialization_options["show_progress_every_ms"] is not None
+            assert params.initialization_options["debounce_ms"] is not None
+            assert params.initialization_options["max_file_size"] is not None
+            assert params.initialization_options["model_gemini"] is not None
+            assert params.initialization_options["api_key_gemini"] is not None
+
+            os.environ['timeout'] = str(params.initialization_options["timeout"])
+            os.environ['show_progress'] = str(params.initialization_options["show_progress"])
+            os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
+            os.environ['debounce_ms'] = str(params.initialization_options["debounce_ms"])
+            os.environ['max_file_size'] = str(params.initialization_options["max_file_size"])
+
+            ls.config = {
+                    "timeout" :  params.initialization_options["timeout"],
+                    "show_progress" :  params.initialization_options["show_progress"],
+                    "show_progress_every_ms" :  params.initialization_options["show_progress_every_ms"],
+                    "debounce_ms" :  params.initialization_options["debounce_ms"],
+                    "max_file_size" : params.initialization_options["max_file_size"],
+                    "api_key_gemini" : params.initialization_options["api_key_gemini"],
+                    "model_gemini" : params.initialization_options["model_gemini"],
+                    "use_gemini" : params.initialization_options["use_gemini"],
+                    "use_omniprovider" : False,
+                    "use_openrouter" : False,
+                    }
+        elif params.initialization_options["use_openrouter"]:
+            assert params.initialization_options["model_openrouter"] is not None
+            assert params.initialization_options["api_key_openrouter"] is not None
+            assert params.initialization_options["timeout"] is not None
+            assert params.initialization_options["show_progress"] is not None
+            assert params.initialization_options["show_progress_every_ms"] is not None
+            assert params.initialization_options["debounce_ms"] is not None
+            assert params.initialization_options["max_file_size"] is not None
+
+            os.environ['model_openrouter'] = str(params.initialization_options["model_openrouter"])
+            os.environ['api_key_openrouter'] = str(params.initialization_options["api_key_openrouter"])
+            os.environ['timeout'] = str(params.initialization_options["timeout"])
+            os.environ['show_progress'] = str(params.initialization_options["show_progress"])
+            os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
+            os.environ['debounce_ms'] = str(params.initialization_options["debounce_ms"])
+            os.environ['max_file_size'] = str(params.initialization_options["max_file_size"])
+
+            ls.config = {
+                    "model_openrouter" : str(params.initialization_options["model"]), 
+                    "api_key_openrouter": str(params.initialization_options["api_key"]),
+                    "timeout" :  params.initialization_options["timeout"],
+                    "show_progress" :  params.initialization_options["show_progress"],
+                    "show_progress_every_ms" :  params.initialization_options["show_progress_every_ms"],
+                    "debounce_ms" :  params.initialization_options["debounce_ms"],
+                    "max_file_size" : params.initialization_options["max_file_size"],
+                    "use_gemini" : False,
+                    "use_omniprovider" : False,
+                    "use_openrouter" : params.initialization_options["use_openrouter"]
+                    }
 
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)

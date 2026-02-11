@@ -6,6 +6,8 @@ import logging
 import os
 import threading
 
+from ai_diagnos_lsp.analysers.chains.BasicChainGemini import BasicChainGeminiFactory
+from ai_diagnos_lsp.analysers.chains.BasicChainOmniprovider import BasicChainOmniproviderFactory
 from ai_diagnos_lsp.analysers.chains.BasicChainOpenrouter import BasicChainOpenrouterFactory
 
 import re
@@ -93,13 +95,43 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
 
         ls.window_show_message(types.ShowMessageParams(types.MessageType(3), f"The timeout recieved is the following : {timeout}"))
 
-        model = os.getenv('model_openrouter')
-        assert model is not None
+        if ls.config["use_omniprovider"]
 
-        api_key = os.getenv('api_key_openrouter')
-        assert api_key is not None
+            model_openrouter = ls.config["model_openrouter"]
+            api_key_openrouter = ls.config["api_key_openrouter"]
+            model_gemini = ls.config["model_gemini"]
+            api_key_gemini = ls.config["api_key_gemini"]
 
-        BasicChainOpenrouter = BasicChainOpenrouterFactory(model_openrouter=model, api_key_openrouter=api_key)
+
+            BasicChain = BasicChainOmniproviderFactory(
+                    model_openrouter=model_openrouter,
+                    api_key_openrouter=api_key_openrouter,
+                    api_key_gemini=api_key_gemini,
+                    model_gemini=model_gemini
+                    )
+
+        elif ls.config["use_gemini"]:
+
+            model_gemini = ls.config["model_gemini"]
+            api_key_gemini = ls.config["api_key_gemini"]
+
+            BasicChain = BasicChainGeminiFactory(
+                    api_key_gemini=api_key_gemini,
+                    model_gemini=model_gemini
+                    )
+
+        elif ls.config["use_openrouter"]:
+
+            model_openrouter = ls.config["model_openrouter"]
+            api_key_openrouter = ls.config["api_key_openrouter"]
+
+            BasicChain = BasicChainOpenrouterFactory(
+                    model_openrouter, api_key_openrouter
+                    )
+        else:
+            ls.window_show_message(types.ShowMessageParams(types.MessageType(1), "INVALID CONFIGURATION RECIEVED. One of use parameters must be true !"))
+            raise RuntimeError("INVALID CONFIGURATION RECIEVED. One of use parameters must be true !")
+            
 
         langchain_completed_event = threading.Event()
         langchain_timed_out = threading.Event()
@@ -110,7 +142,7 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
         def LangchainInvokingThread(document: TextDocument):
             try:
                 nonlocal tmp
-                tmp = BasicChainOpenrouter.invoke({
+                tmp = BasicChain.invoke({
                     "file_content": document.source
                     })
                 langchain_completed_event.set()
