@@ -56,16 +56,6 @@ def main():
         assert params.initialization_options is not None
         if params.initialization_options["use_omniprovider"]:
 
-            assert params.initialization_options["model_openrouter"] is not None
-            assert params.initialization_options["api_key_openrouter"] is not None
-            assert params.initialization_options["timeout"] is not None
-            assert params.initialization_options["show_progress"] is not None
-            assert params.initialization_options["show_progress_every_ms"] is not None
-            assert params.initialization_options["debounce_ms"] is not None
-            assert params.initialization_options["max_file_size"] is not None
-            assert params.initialization_options["model_gemini"] is not None
-            assert params.initialization_options["api_key_gemini"] is not None
-
             ls.config = {
                     "model_openrouter" : params.initialization_options["model_openrouter"],
                     "api_key_openrouter": params.initialization_options["api_key_openrouter"],
@@ -79,16 +69,10 @@ def main():
                     "use_gemini" : False,
                     "use_omniprovider" : True,
                     "use_openrouter" : False,
+                    "fallback_models_gemini" : params.initialization_options["fallback_models_gemini"]
                     }
 
         elif params.initialization_options["use_gemini"]:
-            assert params.initialization_options["timeout"] is not None
-            assert params.initialization_options["show_progress"] is not None
-            assert params.initialization_options["show_progress_every_ms"] is not None
-            assert params.initialization_options["debounce_ms"] is not None
-            assert params.initialization_options["max_file_size"] is not None
-            assert params.initialization_options["model_gemini"] is not None
-            assert params.initialization_options["api_key_gemini"] is not None
 
             ls.config = {
                     "timeout" :  params.initialization_options["timeout"],
@@ -104,13 +88,6 @@ def main():
                     }
 
         elif params.initialization_options["use_openrouter"]:
-            assert params.initialization_options["model_openrouter"] is not None
-            assert params.initialization_options["api_key_openrouter"] is not None
-            assert params.initialization_options["timeout"] is not None
-            assert params.initialization_options["show_progress"] is not None
-            assert params.initialization_options["show_progress_every_ms"] is not None
-            assert params.initialization_options["debounce_ms"] is not None
-            assert params.initialization_options["max_file_size"] is not None
 
             ls.config = {
                     "model_openrouter" : str(params.initialization_options["model"]), 
