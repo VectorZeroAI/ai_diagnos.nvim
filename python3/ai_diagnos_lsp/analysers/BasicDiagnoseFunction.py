@@ -65,8 +65,10 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
 
             try:
                 fallback_models_gemini = ls.config["fallback_models_gemini"]
-            except Exception:
+                ls.window_show_message(types.ShowMessageParams(types.MessageType(3), f"Got fallback gemini models. {fallback_models_gemini}"))
+            except Exception as e:
                 fallback_models_gemini = None
+                ls.window_show_message(types.ShowMessageParams(types.MessageType(2), f"Couldnt get fallback models gemini. The error : {e}"))
 
 
             BasicChain = BasicChainOmniproviderFactory(
@@ -82,9 +84,15 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
             model_gemini = ls.config["model_gemini"]
             api_key_gemini = ls.config["api_key_gemini"]
 
+            try:
+                fallback_models_gemini = ls.config["fallback_models_gemini"]
+            except Exception:
+                fallback_models_gemini = None
+
             BasicChain = BasicChainGeminiFactory(
                     api_key_gemini=api_key_gemini,
-                    model_gemini=model_gemini
+                    model_gemini=model_gemini,
+                    fallback_models_gemini=fallback_models_gemini
                     )
 
         elif ls.config["use_openrouter"]:
