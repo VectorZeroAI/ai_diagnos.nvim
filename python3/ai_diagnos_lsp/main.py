@@ -40,9 +40,7 @@ class AI_diagnos_lsp(LanguageServer):
             self.window_show_message(types.ShowMessageParams(types.MessageType(2), "File size is to big. Rejecting"))
             return
 
-        try:
-            lambda: self.last_diagnostic_time[doc.uri] - 1
-        except Exception:
+        if doc.uri not in self.last_diagnostic_time:
             self.last_diagnostic_time[doc.uri] = 0
 
         if not time.time() - self.last_diagnostic_time[doc.uri] >= debounce_ms / 1000:
@@ -59,6 +57,7 @@ def main():
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
 
+        # TODO : Fix this bizzare way of setting things. Use a for loop.
         assert params.initialization_options is not None
         if params.initialization_options["use_omniprovider"]:
 

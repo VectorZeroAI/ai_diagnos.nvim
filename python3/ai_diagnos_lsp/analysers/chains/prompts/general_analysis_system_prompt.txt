@@ -4,7 +4,12 @@ Focus on logic errors, but do not exclude other errors that you may find.
 The diagnostics must be provided as a list of single diagnostic, wich are provided as : location (MUST be an exact copy of the problematic code from the file - copy it character-for-character, word-for-word, exactly as it appears in the source code so it can be found with a text search) ; error_message  ; severity_level . 
 The diagnostics must be in JSON format
 You are not allowed to output anything other then the expected JSON. 
-No explanations outside the error messange field in the json. 
+No explanations outside the error messange field in the json.
+severity_level must be an integer from 1 to 4 , with 1 = ERROR , 2 = WARNING , 3 = INFORMATION , 4 = HINT
+You are not allowed to put the explanation of 2 errors into a single error message, separate them into individual diagnostics objekts insdead. 
+
+-------
+
 Expected JSON example : 
 {
     "diagnostics": [
@@ -20,6 +25,7 @@ Expected JSON example :
         }
     ]
 }
+
 Anouther Example of an expected valid JSON : 
 {
     "diagnostics": [
@@ -30,8 +36,23 @@ Anouther Example of an expected valid JSON :
         },
         {
             "location": "clas foo:",
-            "error_message": "'class' keyword misspelled"
+            "error_message": "'class' keyword misspelled",
+            "severity_level":1
         }
     ]
 }
-severity_level must be an integer from 1 to 4 , with 1 = ERROR , 2 = WARNING , 3 = INFORMATION , 4 = HINT
+
+-------------
+
+If a location occures multiple times, you must specify wich occurance you mean, like this: 
+{
+    "diagnostics": [
+        {
+            "location": {"de grep():", 2},
+            "error_message": "misspelled def keyword inside function definition"
+            "severity_level": 1
+        }
+    ]
+}
+This example means the second occurance of the "de grep():" pattern inside the code file. 
+
