@@ -52,6 +52,10 @@ function M.setup(user_config)
                 show_progress = user_config.show_progress or default_config.show_progress,
                 show_progress_every_ms = user_config.show_progress_every_ms or default_config.show_progress_every_ms,
                 ai_diagnostics_symbol = user_config.ai_diagnostics_symbol or default_config.ai_diagnostics_symbol,
+                model_gemini = user_config.model_gemini or default_config.model_gemini,
+                use_gemini = user_config.use_gemini or default_config.use_gemini,
+                use_openrouter = user_config.use_openrouter or default_config.use_openrouter,
+                use_omniprovider = user_config.use_omniprovider or default_config.use_omniprovider,
             },
         }
     -- Register the LSP server configuration
