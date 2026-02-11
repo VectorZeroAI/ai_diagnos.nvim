@@ -46,7 +46,7 @@ function M.setup(user_config)
                 api_key_openrouter = user_config.api_key_openrouter,
                 api_key_gemini = user_config.api_key_gemini,
                 timeout = user_config.timeout or default_config.timeout,
-                model = user_config.model or default_config.model_openrouter,
+                model_openrouter = user_config.model or default_config.model_openrouter,
                 debounce_ms = user_config.debounce_ms or default_config.debounce_ms,
                 max_file_size = user_config.max_file_size or default_config.max_file_size,
                 show_progress = user_config.show_progress or default_config.show_progress,
