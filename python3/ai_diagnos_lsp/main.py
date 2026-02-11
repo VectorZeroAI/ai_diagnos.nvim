@@ -14,6 +14,8 @@ from pygls.workspace import TextDocument
 
 import time
 
+from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunctionWorker
+
 class AI_diagnos_lsp(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -25,7 +27,7 @@ class AI_diagnos_lsp(LanguageServer):
                     format='%(asctime)s [%(levelname)s] %(message)s',
                     datefmt='%H:%M:%S'
                     )
-        self.last_diagnostic_time = 0
+        self.last_diagnostic_time = {}
         self.config = {}
 
     def BasicDiagnose(self, doc: TextDocument):
@@ -38,14 +40,18 @@ class AI_diagnos_lsp(LanguageServer):
             self.window_show_message(types.ShowMessageParams(types.MessageType(2), "File size is to big. Rejecting"))
             return
 
-        if not time.time() - self.last_diagnostic_time >= debounce_ms / 1000:
+        try:
+            lambda: self.last_diagnostic_time[doc.uri] - 1
+        except Exception:
+            self.last_diagnostic_time[doc.uri] = 0
+
+        if not time.time() - self.last_diagnostic_time[doc.uri] >= debounce_ms / 1000:
             self.window_show_message(types.ShowMessageParams(types.MessageType(2), "Debounced the diagnostic"))
             return
 
-        from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunctionWorker
-
         threading.Thread(target=BasicDiagnoseFunctionWorker, args=(doc, self)).start()
-        self.last_diagnostic_time = time.time()
+
+        self.last_diagnostic_time[doc.uri] = time.time()
 
 def main():
     server = AI_diagnos_lsp('ai_diagnos', "v0.7 DEV")
@@ -186,8 +192,16 @@ def main():
             # TODO : Add good logging
     
     @server.command("Clear.AIDiagnostics")
-    def ClearAIDiagnostics(ls: AI_diagnos_lsp):
-        ls.diagnostics = {}
+    def ClearAIDiagnostics(ls: AI_diagnos_lsp, params: Sequence[Any | None]):
+        """ Clears AI diagnostics for the provided URI """
+        ls.diagnostics[0] = {}
+        ls.window_show_message(types.ShowMessageParams(types.MessageType(3), "succesfully cleared the diagnostics"))
+
+    @server.command("Clear.AIDiagnostics.All")
+    def ClearAllAIDiagnostics(ls: AI_diagnos_lsp, params: Sequence[Any | None]):
+        """ Clears ALL the AI diagnostics """
+        for i in ls.diagnostics:
+            ls.diagnostics[i] = {}
         ls.window_show_message(types.ShowMessageParams(types.MessageType(3), "succesfully cleared the diagnostics"))
 
     server.start_io()
