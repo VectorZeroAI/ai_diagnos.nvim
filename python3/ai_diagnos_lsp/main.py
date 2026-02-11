@@ -69,8 +69,11 @@ def main():
                     "use_gemini" : False,
                     "use_omniprovider" : True,
                     "use_openrouter" : False,
-                    "fallback_models_gemini" : params.initialization_options["fallback_models_gemini"]
                     }
+            try:
+                ls.config["fallback_models_gemini"] = params.initialization_options["fallback_models_gemini"]
+            except Exception:
+                pass
 
         elif params.initialization_options["use_gemini"]:
 
@@ -86,6 +89,12 @@ def main():
                     "use_omniprovider" : False,
                     "use_openrouter" : False,
                     }
+
+            try:
+                ls.config["fallback_models_gemini"] = params.initialization_options["fallback_models_gemini"]
+            except Exception:
+                pass
+            
 
         elif params.initialization_options["use_openrouter"]:
 
