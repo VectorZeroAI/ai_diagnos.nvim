@@ -59,13 +59,9 @@ class AI_diagnos_lsp(LanguageServer):
 
     def BasicDiagnose(self, doc: TextDocument):
 
-        max_file_size = os.getenv('max_file_size')
-        assert max_file_size is not None
-        max_file_size = int(max_file_size)
+        max_file_size = self.config["max_file_size"]
 
-        debounce_ms = os.getenv('debounce_ms')
-        assert debounce_ms is not None
-        debounce_ms = int(debounce_ms)
+        debounce_ms = self.config["debounce_ms"]
         
 
         if len(doc.lines) > max_file_size:
@@ -79,6 +75,7 @@ class AI_diagnos_lsp(LanguageServer):
         from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunctionWorker
 
         threading.Thread(target=BasicDiagnoseFunctionWorker, args=(doc, self)).start()
+        self.last_diagnostic_time = time.time()
 
 def main():
     server = AI_diagnos_lsp('ai_diagnos', "v0.6 DEV")
@@ -99,17 +96,9 @@ def main():
             assert params.initialization_options["model_gemini"] is not None
             assert params.initialization_options["api_key_gemini"] is not None
 
-            os.environ['model_openrouter'] = str(params.initialization_options["model_openrouter"])
-            os.environ['api_key_openrouter'] = str(params.initialization_options["api_key_openrouter"])
-            os.environ['timeout'] = str(params.initialization_options["timeout"])
-            os.environ['show_progress'] = str(params.initialization_options["show_progress"])
-            os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
-            os.environ['debounce_ms'] = str(params.initialization_options["debounce_ms"])
-            os.environ['max_file_size'] = str(params.initialization_options["max_file_size"])
-
             ls.config = {
-                    "model_openrouter" : str(params.initialization_options["model"]), 
-                    "api_key_openrouter": str(params.initialization_options["api_key"]),
+                    "model_openrouter" : params.initialization_options["model_openrouter"],
+                    "api_key_openrouter": params.initialization_options["api_key_openrouter"],
                     "timeout" :  params.initialization_options["timeout"],
                     "show_progress" :  params.initialization_options["show_progress"],
                     "show_progress_every_ms" :  params.initialization_options["show_progress_every_ms"],
@@ -117,9 +106,9 @@ def main():
                     "max_file_size" : params.initialization_options["max_file_size"],
                     "api_key_gemini" : params.initialization_options["api_key_gemini"],
                     "model_gemini" : params.initialization_options["model_gemini"],
-                    "use_gemini" : params.initialization_options["use_gemini"],
-                    "use_omniprovider" : params.initialization_options["use_omniprovider"],
-                    "use_openrouter" : params.initialization_options["use_openrouter"]
+                    "use_gemini" : False,
+                    "use_omniprovider" : True,
+                    "use_openrouter" : False,
                     }
 
         elif params.initialization_options["use_gemini"]:
@@ -130,12 +119,6 @@ def main():
             assert params.initialization_options["max_file_size"] is not None
             assert params.initialization_options["model_gemini"] is not None
             assert params.initialization_options["api_key_gemini"] is not None
-
-            os.environ['timeout'] = str(params.initialization_options["timeout"])
-            os.environ['show_progress'] = str(params.initialization_options["show_progress"])
-            os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
-            os.environ['debounce_ms'] = str(params.initialization_options["debounce_ms"])
-            os.environ['max_file_size'] = str(params.initialization_options["max_file_size"])
 
             ls.config = {
                     "timeout" :  params.initialization_options["timeout"],
@@ -149,6 +132,7 @@ def main():
                     "use_omniprovider" : False,
                     "use_openrouter" : False,
                     }
+
         elif params.initialization_options["use_openrouter"]:
             assert params.initialization_options["model_openrouter"] is not None
             assert params.initialization_options["api_key_openrouter"] is not None
@@ -157,14 +141,6 @@ def main():
             assert params.initialization_options["show_progress_every_ms"] is not None
             assert params.initialization_options["debounce_ms"] is not None
             assert params.initialization_options["max_file_size"] is not None
-
-            os.environ['model_openrouter'] = str(params.initialization_options["model_openrouter"])
-            os.environ['api_key_openrouter'] = str(params.initialization_options["api_key_openrouter"])
-            os.environ['timeout'] = str(params.initialization_options["timeout"])
-            os.environ['show_progress'] = str(params.initialization_options["show_progress"])
-            os.environ['show_progress_every_ms'] = str(params.initialization_options["show_progress_every_ms"])
-            os.environ['debounce_ms'] = str(params.initialization_options["debounce_ms"])
-            os.environ['max_file_size'] = str(params.initialization_options["max_file_size"])
 
             ls.config = {
                     "model_openrouter" : str(params.initialization_options["model"]), 

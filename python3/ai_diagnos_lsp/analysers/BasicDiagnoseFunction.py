@@ -60,42 +60,32 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
                     datefmt='%H:%M:%S'
                     )
         
-        debounce_ms_as_string = os.getenv('debounce_ms')
-        assert debounce_ms_as_string is not None
-        debounce_ms = int(debounce_ms_as_string)
+        debounce_ms = ls.config["debounce_ms"]
 
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.info(f"recieved = {debounce_ms}")
         
-        show_progress_every_ms_as_string = os.getenv('show_progress_every_ms')
-        assert show_progress_every_ms_as_string is not None
-        show_progress_every_ms = int(show_progress_every_ms_as_string)
+        show_progress_every_ms = ls.config["show_progress_every_ms"]
 
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.info(f"recieved = {show_progress_every_ms}")
 
-        show_progress_as_string = os.getenv('show_progress')
-        assert show_progress_as_string is not None
-        show_progress = bool(show_progress_as_string)
+        show_progress = ls.config["show_progress"]
 
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.info(f"recieved = {show_progress}")
 
-        max_file_size_as_string = os.getenv('max_file_size')
-        assert max_file_size_as_string is not None
-        max_file_size = int(max_file_size_as_string)
+        max_file_size = ls.config["max_file_size"]
 
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.info(f"recieved = {max_file_size}")
 
 
-        timeout_as_str = os.getenv('timeout')
-        assert timeout_as_str is not None
-        timeout = int(timeout_as_str)
+        timeout = ls.config["timeout"]
 
         ls.window_show_message(types.ShowMessageParams(types.MessageType(3), f"The timeout recieved is the following : {timeout}"))
 
-        if ls.config["use_omniprovider"]
+        if ls.config["use_omniprovider"]:
 
             model_openrouter = ls.config["model_openrouter"]
             api_key_openrouter = ls.config["api_key_openrouter"]
@@ -214,13 +204,13 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
 
             diagnostics.append(
                     types.Diagnostic(
-                        message=i.error_message + "       [AI]",
+                        message=i.error_message,
                         severity=severity_level_converted,
                         range=types.Range(
                             start=types.Position(pos_line, pos_char),
                             end=types.Position(pos_line, pos_char)
                             ), 
-                        source="AI diagnos LSP", data=" AI ",code= " AI ",
+                        source="AI diagnos LSP", data="AI",code= "AI",
                         code_description=types.CodeDescription(" This is AI generated Diagnostics. I am putting this wherever I can because why not ?  ")
                         )
                     )
