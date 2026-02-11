@@ -5,46 +5,48 @@ function M.setup(user_config)
 
     local configs = require('lspconfig.configs')
 
-    if user_config.api_key == nil then
-        print("API key is required for the system to function normally")
-        error("API key parameter is required. please include it in your config", 2)
+    if user_config.use_gemini == true or user_config.use_omniprovider == true then
+        if user_config.api_key_gemini == nil then
+            error("For your usage configuration, you must provide a gemini api key !")
+        end
+    end
+
+    if user_config.use_openrouter == true or user_config.use_omniprovider == true then
+        if user_config.api_key_openrouter == nil then
+            error("For your usage configuration, you must provide an openrouter api key ! ")
+        end
     end
 
     local default_config = {
         cmd = { 'ai-diagnos-lsp' },
         filetypes = { 'python', 'go', 'lua' },
         root_dir = require('lspconfig').util.root_pattern('.git'),
-        settings = {},
         on_attach = nil,
         capabilities = nil,
         timeout = 99999,
-        model = "tngtech/tng-r1t-chimera:free",
+        model_openrouter = "tngtech/tng-r1t-chimera:free",
         debounce_ms = 3000,
         max_file_size = 10000,
         show_progress = true,
         show_progress_every_ms = 5000,
         ai_diagnostics_symbol = "AI",
+        model_gemini = "gemini-2.5-flash-lite",
+        use_gemini = false,
+        use_openrouter = false,
+        use_omniprovider = true
+
     }
     M.config = {
             cmd = user_config.cmd or default_config.cmd,
             filetypes = user_config.filetypes or default_config.filetypes,
             root_dir = user_config.root_dir or default_config.root_dir,
-            settings = {
-                api_key = user_config.api_key,
-                timeout_ms = user_config.timeout or default_config.timeout,
-                model = user_config.model or default_config.model,
-                debounce_ms = user_config.debounce_ms or default_config.debounce_ms,
-                max_file_size = user_config.max_file_size or default_config.max_file_size,
-                show_progress = user_config.show_progress or default_config.show_progress,
-                show_progress_every_ms = user_config.show_progress_every_ms or default_config.show_progress_every_ms,
-                ai_diagnostics_symbol = user_config.ai_diagnostics_symbol or default_config.ai_diagnostics_symbol,
-            },
             on_attach = user_config.on_attach or default_config.on_attach,
             capabilities = user_config.capabilities or default_config.capabilities,
             init_options = {
-                api_key = user_config.api_key,
+                api_key_openrouter = user_config.api_key_openrouter,
+                api_key_gemini = user_config.api_key_gemini,
                 timeout = user_config.timeout or default_config.timeout,
-                model = user_config.model or default_config.model,
+                model = user_config.model or default_config.model_openrouter,
                 debounce_ms = user_config.debounce_ms or default_config.debounce_ms,
                 max_file_size = user_config.max_file_size or default_config.max_file_size,
                 show_progress = user_config.show_progress or default_config.show_progress,
