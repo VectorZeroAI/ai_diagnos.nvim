@@ -33,7 +33,10 @@ function M.setup(user_config)
         model_gemini = "gemini-2.5-flash-lite",
         use_gemini = false,
         use_openrouter = false,
-        use_omniprovider = true
+        use_omniprovider = true,
+        fallback_models_gemini = {
+            "gemini-2.5-flash", "gemini-3-flash-preview"
+        }
 
     }
     M.config = {
@@ -56,6 +59,7 @@ function M.setup(user_config)
                 use_gemini = user_config.use_gemini or default_config.use_gemini,
                 use_openrouter = user_config.use_openrouter or default_config.use_openrouter,
                 use_omniprovider = user_config.use_omniprovider or default_config.use_omniprovider,
+                fallback_models_gemini = user_config.fallback_models_gemini or default_config.fallback_models_gemini,
             },
         }
     -- Register the LSP server configuration
