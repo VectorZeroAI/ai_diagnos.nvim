@@ -21,7 +21,14 @@ Logic and consistency errors include:
 
 The diagnostics must be provided as a list of single diagnostic, wich are provided as : location (MUST be an exact copy of the problematic code from the file - copy it character-for-character, word-for-word, exactly as it appears in the source code so it can be found with a text search) ; error_message  ; severity_level . 
 The diagnostics must be in JSON format
-You are not allowed use any special symbols or marks like &quote or ``` .   
+You are not allowed use any special symbols or marks like &quot or ``` .   
+YOU ARE NOT ALLOWED TO WRITE &gt !!!
+YOU ARE NOT ALLOWED TO WRITE &gt !!!
+YOU ARE NOT ALLOWED TO WRITE &gt !!!
+YOU ARE NOT ALLOWED TO WRITE &quot
+YOU ARE NOT ALLOWED TO WRITE &quot
+YOU ARE NOT ALLOWED TO WRITE &quot
+YOU ARE NOT ALLOWED TO WRITE &quot
 You are not allowed use any special symbols or marks like &quote or ``` .   
 You are not allowed to output anything other then the expected JSON. 
 No explanations outside the error messange field in the json.
@@ -113,7 +120,7 @@ If a location occures multiple times, you must specify wich occurance you mean, 
 {
     "diagnostics": [
         {
-            "location": {"de grep():", 2},
+            "location": ["de grep():", 2],
             "error_message": "misspelled def keyword inside function definition"
             "severity_level": 1
         }

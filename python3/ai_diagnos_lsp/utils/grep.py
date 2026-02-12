@@ -21,7 +21,7 @@ def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) 
             lines = lines.splitlines()
         
         flags = re.IGNORECASE if ignore_case else 0
-        regex = re.compile(pattern, flags)
+        regex = re.compile(re.escape(pattern), flags)
         
         matches = []
         
