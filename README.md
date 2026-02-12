@@ -48,7 +48,6 @@ Technically you can just use omniprovider with garbage as api_keys for all the p
 
 ## Parameters:
 
-|-------|-------|------|-------|
 | parameter | role | example value | optional ? |
 |-------|-------|------|-------|
 | api_key_openrouter | I is an required parameter, used to acsess the API. | "sadgubwqeogfUWHEGHBAWELIGUBAIRUGBeirgbea" | requred for openrouter or omniprovider. Not if not using that. |
