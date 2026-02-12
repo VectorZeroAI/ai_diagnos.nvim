@@ -3,6 +3,8 @@ Your task is to find errors in the provided file, and then output them in the la
 Focus on logic errors, but do not exclude other errors that you may find.
 The diagnostics must be provided as a list of single diagnostic, wich are provided as : location (MUST be an exact copy of the problematic code from the file - copy it character-for-character, word-for-word, exactly as it appears in the source code so it can be found with a text search) ; error_message  ; severity_level . 
 The diagnostics must be in JSON format
+You are not allowed use any special symbols or marks like &quote or `````` .   
+You are not allowed use any special symbols or marks like &quote or `````` .   
 You are not allowed to output anything other then the expected JSON. 
 No explanations outside the error messange field in the json.
 severity_level must be an integer from 1 to 4 , with 1 = ERROR , 2 = WARNING , 3 = INFORMATION , 4 = HINT
@@ -41,6 +43,34 @@ Anouther Example of an expected valid JSON :
         }
     ]
 }
+
+BAD ANSWER EXAMPLE: 
+```json
+{
+    "diagnostics": [
+        {
+            "location": "lol",
+            "error_message": "Invalid syntax, lol is not a valid keyword, nor a defined variable name",
+            "severity_level": 1
+        }
+    ]
+
+}
+```
+REASON WHY BAD : Prefixing and ending with ``` . INCLUDING ``` IS NOT ALLOWED.
+
+ANOUTHER BAD ANSWER EXAMPLE: 
+{
+    "diagnostics": [
+        {
+            "location": "&quot lol &quot",
+            "error_message": "Invalid syntax, lol is not a valid keyword, nor a defined variable name",
+            "severity_level": 1
+        }
+    ]
+
+}
+REASON WHY BAD : Usage of &quot . USAGE OF &quot or any other prefixing / suffixing pattern outside json IS NOT ALLOWED. 
 
 -------------
 
