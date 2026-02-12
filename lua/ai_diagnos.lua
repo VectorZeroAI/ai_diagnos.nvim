@@ -17,6 +17,12 @@ function M.setup(user_config)
         end
     end
 
+    if user_config.use_groq == true or user_config.use_omniprovider == true then
+        if user_config.api_key_groq == nil then
+            error("For your useage configuration, you must provide an groq api key !")
+        end
+    end
+
     local default_config = {
         cmd = { 'ai-diagnos-lsp' },
         filetypes = { 'python', 'go', 'lua' },
@@ -45,34 +51,48 @@ function M.setup(user_config)
 
 
     }
+--    M.config = {
+--            cmd = user_config.cmd or default_config.cmd,
+--            filetypes = user_config.filetypes or default_config.filetypes,
+--            root_dir = user_config.root_dir or default_config.root_dir,
+--            on_attach = user_config.on_attach or default_config.on_attach,
+--            capabilities = user_config.capabilities or default_config.capabilities,
+--            init_options = {
+--                api_key_openrouter = user_config.api_key_openrouter,
+--                api_key_gemini = user_config.api_key_gemini,
+--                timeout = user_config.timeout or default_config.timeout,
+--                model_openrouter = user_config.model_openrouter or default_config.model_openrouter,
+--                debounce_ms = user_config.debounce_ms or default_config.debounce_ms,
+--                max_file_size = user_config.max_file_size or default_config.max_file_size,
+--                show_progress = user_config.show_progress or default_config.show_progress,
+--                show_progress_every_ms = user_config.show_progress_every_ms or default_config.show_progress_every_ms,
+--                ai_diagnostics_symbol = user_config.ai_diagnostics_symbol or default_config.ai_diagnostics_symbol,
+--                model_gemini = user_config.model_gemini or default_config.model_gemini,
+--                use_gemini = user_config.use_gemini or default_config.use_gemini,
+--                use_openrouter = user_config.use_openrouter or default_config.use_openrouter,
+--                use_omniprovider = user_config.use_omniprovider or default_config.use_omniprovider,
+--                fallback_models_gemini = user_config.fallback_models_gemini or default_config.fallback_models_gemini,
+--                api_key_groq = user_config.api_key_groq,
+--                model_groq = user_config.model_groq or default_config.model_groq,
+--                fallback_models_groq = user_config.fallback_models_groq or default_config.fallback_models_groq,
+--                use_groq = user_config.use_groq or default_config.use_groq,
+--            },
+--        }
+
     M.config = {
             cmd = user_config.cmd or default_config.cmd,
             filetypes = user_config.filetypes or default_config.filetypes,
             root_dir = user_config.root_dir or default_config.root_dir,
             on_attach = user_config.on_attach or default_config.on_attach,
             capabilities = user_config.capabilities or default_config.capabilities,
-            init_options = {
-                api_key_openrouter = user_config.api_key_openrouter,
-                api_key_gemini = user_config.api_key_gemini,
-                timeout = user_config.timeout or default_config.timeout,
-                model_openrouter = user_config.model_openrouter or default_config.model_openrouter,
-                debounce_ms = user_config.debounce_ms or default_config.debounce_ms,
-                max_file_size = user_config.max_file_size or default_config.max_file_size,
-                show_progress = user_config.show_progress or default_config.show_progress,
-                show_progress_every_ms = user_config.show_progress_every_ms or default_config.show_progress_every_ms,
-                ai_diagnostics_symbol = user_config.ai_diagnostics_symbol or default_config.ai_diagnostics_symbol,
-                model_gemini = user_config.model_gemini or default_config.model_gemini,
-                use_gemini = user_config.use_gemini or default_config.use_gemini,
-                use_openrouter = user_config.use_openrouter or default_config.use_openrouter,
-                use_omniprovider = user_config.use_omniprovider or default_config.use_omniprovider,
-                fallback_models_gemini = user_config.fallback_models_gemini or default_config.fallback_models_gemini,
-                api_key_groq = user_config.api_key_groq,
-                model_groq = user_config.model_groq or default_config.model_groq,
-                fallback_models_groq = user_config.fallback_models_groq or default_config.fallback_models_groq,
-                use_groq = user_config.use_groq or default_config.use_groq,
-                -- TODO : FIX THIS MONSTROUSITY
-            },
-        }
+            init_options = {},
+    }
+    for key, value in pairs(user_config) do
+        M.config.init_options[key] = value
+    end
+    
+
+
     -- Register the LSP server configuration
     local lspconfig = require("lspconfig")
     -- Define the server if not already defined
@@ -95,7 +115,6 @@ function M.setup(user_config)
                 cmd = M.config.cmd,
                 filetypes = M.config.filetypes,
                 root_dir = M.config.root_dir,
-                settings = M.config.settings,
                 on_attach = M.config.on_attach,
                 capabilities = M.config.capabilities,
                 init_options = M.config.init_options,
@@ -126,10 +145,10 @@ function M.setup(user_config)
                     vim.diagnostic.config({
                         signs = {
                             text = {
-                                [vim.diagnostic.severity.ERROR] = M.config.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.WARN]  = M.config.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.INFO]  = M.config.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.HINT]  = M.config.ai_diagnostics_symbol,
+                                [vim.diagnostic.severity.ERROR] = M.config.init_options.ai_diagnostics_symbol,
+                                [vim.diagnostic.severity.WARN]  = M.config.init_options.ai_diagnostics_symbol,
+                                [vim.diagnostic.severity.INFO]  = M.config.init_options.ai_diagnostics_symbol,
+                                [vim.diagnostic.severity.HINT]  = M.config.init_options.ai_diagnostics_symbol,
                                 -- TODO : Add more options on how to display the AI diagnostics
                             },
                         },
