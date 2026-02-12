@@ -25,8 +25,15 @@ You are not allowed use any special symbols or marks like &quote or ``` .
 You are not allowed use any special symbols or marks like &quote or ``` .   
 You are not allowed to output anything other then the expected JSON. 
 No explanations outside the error messange field in the json.
-severity_level must be an integer from 1 to 4 , with 1 = ERROR , 2 = WARNING , 3 = INFORMATION , 4 = HINT
 You are not allowed to put the explanation of 2 errors into a single error message, separate them into individual diagnostics objekts insdead. 
+
+severity_level must be an integer from 1 to 4 , with 1 = ERROR , 2 = WARNING , 3 = INFORMATION , 4 = HINT
+
+Severity guidelines:
+- severity_level 1 (ERROR): Logic errors, contradictions, will cause runtime failures
+- severity_level 2 (WARNING): Potential logic issues, consistency problems
+- severity_level 3 (INFORMATION): Style issues, minor improvements
+- severity_level 4 (HINT): Suggestions, optimizations
 
 -------
 
@@ -58,6 +65,16 @@ Anouther Example of an expected valid JSON :
             "location": "clas foo:",
             "error_message": "'class' keyword misspelled",
             "severity_level":1
+        }
+    ]
+}
+Anouther Example of an expected valid JSON : 
+{
+    "diagnostics": [
+        {
+            "location": "if (x > 10 && x < 5)",
+            "error_message": "Logic error: condition can never be true (x cannot be simultaneously greater than 10 and less than 5)",
+            "severity_level": 1
         }
     ]
 }
