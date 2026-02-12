@@ -29,6 +29,7 @@ class AI_diagnos_lsp(LanguageServer):
                     )
         self.last_diagnostic_time = {}
         self.config = {}
+        self.diagnostics_lock = threading.Lock()
 
     def BasicDiagnose(self, doc: TextDocument):
 
