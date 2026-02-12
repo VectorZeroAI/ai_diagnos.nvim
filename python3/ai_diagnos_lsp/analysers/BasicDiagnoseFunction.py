@@ -24,14 +24,6 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
                 4: types.DiagnosticSeverity.Hint
                 }
 
-        if os.getenv("AI_DIAGNOS_LOG") is not None:
-            logging.basicConfig(
-                    filename="ai_diagnos_lsp.log",
-                    level=logging.DEBUG,
-                    format='%(asctime)s [%(levelname)s] %(message)s',
-                    datefmt='%H:%M:%S'
-                    )
-        
         debounce_ms = ls.config["debounce_ms"]
 
         if os.getenv("AI_DIAGNOS_LOG") is not None:
@@ -64,13 +56,7 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
             model_gemini = ls.config["model_gemini"]
             api_key_gemini = ls.config["api_key_gemini"]
 
-            try:
-                fallback_models_gemini = ls.config["fallback_models_gemini"]
-                ls.window_show_message(types.ShowMessageParams(types.MessageType(3), f"Got fallback gemini models. {fallback_models_gemini}"))
-            except Exception as e:
-                fallback_models_gemini = None
-                ls.window_show_message(types.ShowMessageParams(types.MessageType(2), f"Couldnt get fallback models gemini. The error : {e}"))
-
+            fallback_models_gemini = ls.config.get("fallback_models_gemini")
 
             BasicChain = BasicChainOmniproviderFactory(
                     model_openrouter=model_openrouter,
@@ -211,7 +197,8 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.info("publishing diagnostics I guess....")
 
-            ls.diagnostics[document.uri] = (document.version, diagnostics)
+            with ls.diagnostics_lock:
+                ls.diagnostics[document.uri] = (document.version, diagnostics)
 
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.info(f"published the following diagnostics {diagnostics} for document {document.uri}")
@@ -222,7 +209,7 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
 
         return logging.warning("Worker thread ending without publishing diagnostics")
     except Exception as e:
-        ls.window_show_message(types.ShowMessageParams(types.MessageType(1), f"Langchain errored out with the following error: {e}"))
+        ls.window_show_message(types.ShowMessageParams(types.MessageType(1), f"The whole worker thread errored out with the following error: {e}"))
         return
 
 

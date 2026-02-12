@@ -57,64 +57,9 @@ def main():
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
 
-        # TODO : Fix this bizzare way of setting things. Use a for loop.
         assert params.initialization_options is not None
-        if params.initialization_options["use_omniprovider"]:
-
-            ls.config = {
-                    "model_openrouter" : params.initialization_options["model_openrouter"],
-                    "api_key_openrouter": params.initialization_options["api_key_openrouter"],
-                    "timeout" :  params.initialization_options["timeout"],
-                    "show_progress" :  params.initialization_options["show_progress"],
-                    "show_progress_every_ms" :  params.initialization_options["show_progress_every_ms"],
-                    "debounce_ms" :  params.initialization_options["debounce_ms"],
-                    "max_file_size" : params.initialization_options["max_file_size"],
-                    "api_key_gemini" : params.initialization_options["api_key_gemini"],
-                    "model_gemini" : params.initialization_options["model_gemini"],
-                    "use_gemini" : False,
-                    "use_omniprovider" : True,
-                    "use_openrouter" : False,
-                    }
-            try:
-                ls.config["fallback_models_gemini"] = params.initialization_options["fallback_models_gemini"]
-            except Exception:
-                pass
-
-        elif params.initialization_options["use_gemini"]:
-
-            ls.config = {
-                    "timeout" :  params.initialization_options["timeout"],
-                    "show_progress" :  params.initialization_options["show_progress"],
-                    "show_progress_every_ms" :  params.initialization_options["show_progress_every_ms"],
-                    "debounce_ms" :  params.initialization_options["debounce_ms"],
-                    "max_file_size" : params.initialization_options["max_file_size"],
-                    "api_key_gemini" : params.initialization_options["api_key_gemini"],
-                    "model_gemini" : params.initialization_options["model_gemini"],
-                    "use_gemini" : params.initialization_options["use_gemini"],
-                    "use_omniprovider" : False,
-                    "use_openrouter" : False,
-                    }
-
-            try:
-                ls.config["fallback_models_gemini"] = params.initialization_options["fallback_models_gemini"]
-            except Exception:
-                pass
-            
-
-        elif params.initialization_options["use_openrouter"]:
-
-            ls.config = {
-                    "model_openrouter" : str(params.initialization_options["model"]), 
-                    "api_key_openrouter": str(params.initialization_options["api_key"]),
-                    "timeout" :  params.initialization_options["timeout"],
-                    "show_progress" :  params.initialization_options["show_progress"],
-                    "show_progress_every_ms" :  params.initialization_options["show_progress_every_ms"],
-                    "debounce_ms" :  params.initialization_options["debounce_ms"],
-                    "max_file_size" : params.initialization_options["max_file_size"],
-                    "use_gemini" : False,
-                    "use_omniprovider" : False,
-                    "use_openrouter" : params.initialization_options["use_openrouter"]
-                    }
+        for i in params.initialization_options:
+            ls.config[i] = params.initialization_options.get(i)
 
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
@@ -193,7 +138,7 @@ def main():
     @server.command("Clear.AIDiagnostics")
     def ClearAIDiagnostics(ls: AI_diagnos_lsp, params: Sequence[Any | None]):
         """ Clears AI diagnostics for the provided URI """
-        ls.diagnostics[0] = {}
+        ls.diagnostics[params[0]] = {}
         ls.window_show_message(types.ShowMessageParams(types.MessageType(3), "succesfully cleared the diagnostics"))
 
     @server.command("Clear.AIDiagnostics.All")
