@@ -10,9 +10,6 @@ from ai_diagnos_lsp.analysers.chains.LLM.BasicGroqLLM import BasicGroqLLMFactory
 
 from ai_diagnos_lsp.analysers.chains.PromptObjekts.BasicAnalysisPrompt import BasicAnalysisPromptFactory
 from ai_diagnos_lsp.analysers.chains.GeneralDiagnosticsPydanticOutputParser import GeneralDiagnosticsOutputParserFactory
-import os
-
-import logging
 
 def BasicChainOmniproviderFactory(api_key_openrouter: str,
                                   api_key_gemini: str,
@@ -23,22 +20,15 @@ def BasicChainOmniproviderFactory(api_key_openrouter: str,
                                   fallback_models_gemini: Sequence[str] | None = None,
                                   fallback_models_groq: Sequence[str] | None = None
                                   ) -> RunnableSerializable[Any, Any]: 
+    """
+    This is Chain Creation function for the Omniprovider option, e.g. for everyone
+    It falls back through providers in order of Openrouter -> Gemini -> Groq 
+    Why ? IDK . 
+    
+    So it basically just chains the chains in the fallback options, so that every provider is used. 
+    """
 
-#    if fallback_models_gemini is not None:
-#        if os.getenv("AI_DIAGNOS_LOG") is not None:
-#            logging.info(f"gemini fallback models gotten by BasicChainOmniproviderFactory. Gotten : {fallback_models_gemini}")
-#
-#        OmniproviderLLM = OpenrouterLlmFactory(model_openrouter, api_key_openrouter
-#                                               ).with_fallbacks([
-#                                                   GeminiLlmFactory(model_gemini, api_key_gemini, fallback_models_gemini)
-#                                                   ])
-#    else:
-#        if os.getenv("AI_DIAGNOS_LOG") is not None:
-#            logging.warning("gemini fallback models NOT gotten. ")
-#        OmniproviderLLM = OpenrouterLlmFactory(model_openrouter, api_key_openrouter
-#                                               ).with_fallbacks([
-#                                                   GeminiLlmFactory(model_gemini, api_key_gemini)
-#                                                   ])
+    # TODO : ADD logging back in
 
     llm = OpenrouterLlmFactory(model_openrouter, api_key_openrouter)
     fallbacks = []

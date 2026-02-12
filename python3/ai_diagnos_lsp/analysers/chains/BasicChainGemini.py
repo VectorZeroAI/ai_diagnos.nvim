@@ -10,6 +10,10 @@ from ai_diagnos_lsp.analysers.chains.GeneralDiagnosticsPydanticOutputParser impo
 
 
 def BasicChainGeminiFactory(model_gemini: str, api_key_gemini: str, fallback_models_gemini: Sequence[str] | None = None) -> RunnableSerializable[dict[Any, Any], Any]:
+    """
+    This is the Gemini langchain chain Factory function. 
+    Its my style to make Factory functions for parts, even if it is a bit uselles. 
+    """
 
     model_gemini = model_gemini
     api_key_gemini = api_key_gemini

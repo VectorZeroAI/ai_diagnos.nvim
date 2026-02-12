@@ -9,6 +9,12 @@ import os
 def GeminiLlmFactory(model_gemini: str, api_key_gemini: str,
                      fallback_gemini_models: Sequence[str] | None = None
                      ) -> ChatGoogleGenerativeAI | RunnableWithFallbacks[Any, Any]:
+    """
+    This is the Langchain llm objekt Factory function for the Gemini provider.
+    It can produce both an llm for only one model, or an llm for many models . 
+    """
+
+
     llm = ChatGoogleGenerativeAI(
             model=model_gemini,
             api_key=SecretStr(api_key_gemini), max_retries = 0
