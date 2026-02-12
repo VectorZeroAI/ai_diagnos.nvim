@@ -183,12 +183,10 @@ The plugin is split into two parts:
 
 ## Roadmap / TODO
 
-- [ ] Fix build system (cross‑platform, reliable)
-- [ ] Implement `AIStatus` command
 - [ ] Make `ai_diagnostics_symbol` actually work
-- [ ] Add caching system for repeated diagnostics
-- [ ] Expose more chain types (e.g. performance analysis, security audit)
-- [ ] Support additional providers (AWS Bedrock, Azure OpenAI, etc.)
+- [ ] Add a diagnostics storage and retrieval system for repeted or multiple diagnostics on the same file. 
+- [ ] Expose more analysers and analysis types (e.g. logic error specific, performance specific, style specific, etc. )
+- [ ] Implement the AI status command
 
 ## Contributing
 
