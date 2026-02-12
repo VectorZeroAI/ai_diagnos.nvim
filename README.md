@@ -1,119 +1,203 @@
 # ai_diagnos.nvim
-Neovim plugin that adds AI diagnostics to neovim. 
 
-# Usage
+A Neovim plugin that adds AI‑powered diagnostics to your editor. It runs a lightweight Python‑based language server that uses LangChain to query various LLM providers (Gemini, OpenRouter, Groq) or an “Omniprovider” that falls back through them. Diagnostics are displayed just like native LSP diagnostics.
 
-To activate the plugin, use the following:
+## Features
 
-with lazy.nivm:
-~~~lua
+- **Pull‑based diagnostics** – triggered on file open, save, or manually.
+- **Multiple AI providers** – Gemini, OpenRouter, Groq, or an Omniprovider that chains them.
+- **Configurable debouncing** – prevents spam during rapid edits.
+- **Custom diagnostic symbols** – mark AI‑generated diagnostics with a custom sign (e.g. `AI`).
+- **Commands** – analyse, clear, or clear all diagnostics.
+- **Graceful fallback** – Omniprovider automatically tries the next provider on failure (rate limits, downtime).
+- **Semantic location matching** – uses exact code snippets, not line numbers, so hallucinations are simply ignored.
 
+## Requirements
+
+- Neovim ≥ 0.9.0 (with `vim.lsp`, `vim.diagnostic`)
+- Python ≥ 3.9
+- `pip` and `venv`
+- An API key for at least one of the supported providers
+
+## Installation
+
+### With [lazy.nvim](https://github.com/folke/lazy.nvim)
+
+```lua
 {
     "VectorZeroAI/ai_diagnos.nvim",
-    build = function ()
-        require('ai_diagnos_lsp').build()
-    end
-    dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
+    build = function()
+        require("ai_diagnos").build()   -- sets up Python virtualenv and installs dependencies
+    end,
+    dependencies = {
+        "nvim-lua/plenary.nvim",
+        "neovim/nvim-lspconfig",
+    },
     config = function()
         require("ai-diagnostics").setup({
-            use_omniprovider = true,
-            api_key_openrouter = vim.env.OPENROUTER_API_KEY,
-            model_openrouter = "anthropic/claude-3.5-sonnet",
-            debounce_ms = 2000,
-            max_file_size = 10000,
-            api_key_gemini = vim.env.GEMINI_API_KEY,
-            api_key_groq = vim.env.GROQ_API_KEY,
+            -- your configuration (see below)
         })
-    end
+    end,
 }
+```
 
-~~~
+> **⚠️ Note on the build system**  
+> The built‑in `build()` currently only works reliably on Linux. If it fails, please install the Python server manually:
+> ```bash
+> cd ~/.local/share/nvim/lazy/ai_diagnos.nvim/python3
+> python -m venv venv
+> .venv/bin/python -m pip install -e .
+> ```
+> After that, the plugin will automatically use this virtual environment.
 
-> [!NOTE]
-> Build system only works on linux now, if it actually works, also it sucks. The LSP is in the same repo as this lua plugin, so you can just go to where neovim cloned that, and run pip install . inside the python3 directory to get that working. 
+### With packer.nvim
 
-TODO: FIX THE BUILD SYSTEM 
+```lua
+use {
+    "VectorZeroAI/ai_diagnos.nvim",
+    run = function()
+        require("ai_diagnos").build()
+    end,
+    requires = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
+    config = function()
+        require("ai-diagnostics").setup({ ... })
+    end,
+}
+```
 
-## Supported API providers :
-1. Gemini. To activate put use_gemini = true, use_omniprovider = false in the config. 
-2. Openrouter. To activate put use_openrouter = true, use_omniprovider = false in the config. 
-3. Groq. TODO : ADD the support for it only. 
-4. Omniprovider. To activate put use_omniprovider = true in the config. 
-5. 
-> [!NOTE]
-> Only one of the use parameters is allowed at a time, but the programm doesnt yet check that, so its your responsibility to not hit undefined behaviour by putting 2 use parameters to true
+## Configuration
 
-Omniprovider basically chains every provider one after anouther, on fail of the previous, for example due to rate limiting. 
-Technically you can just use omniprovider with garbage as api_keys for all the providers exept the one you want and it will still work. 
+Call `require("ai-diagnostics").setup({...})` in your Neovim config. All parameters are optional except the API key(s) for the provider(s) you enable.
 
-## Parameters:
+| Parameter                     | Type               | Default                                   | Description |
+|-------------------------------|--------------------|-------------------------------------------|-------------|
+| `api_key_openrouter`          | `string`           | –                                         | **Required** for OpenRouter or Omniprovider. |
+| `api_key_gemini`             | `string`           | –                                         | **Required** for Gemini or Omniprovider. |
+| `api_key_groq`              | `string`           | –                                         | **Required** for Groq or Omniprovider. |
+| `use_gemini`                 | `boolean`          | `false`                                   | Enable only Gemini. |
+| `use_openrouter`             | `boolean`          | `false`                                   | Enable only OpenRouter. |
+| `use_groq`                   | `boolean`          | `false`                                   | Enable only Groq. |
+| `use_omniprovider`           | `boolean`          | `true`                                    | Try OpenRouter → Gemini → Groq. |
+| `model_openrouter`           | `string`           | `"tngtech/tng-r1t-chimera:free"`          | Model name for OpenRouter. |
+| `model_gemini`              | `string`           | `"gemini-2.5-flash-lite"`                | Model name for Gemini. |
+| `model_groq`                | `string`           | `"openai/gpt-oss-120b"`                  | Model name for Groq. |
+| `fallback_models_gemini`    | `table` (strings)  | `{"gemini-2.5-flash", "gemini-3-flash-preview"}` | Fallback models for Gemini. |
+| `fallback_models_groq`      | `table` (strings)  | `{"openai/gpt-oss-20b", "openai/gpt-oss-safeguard-20b", "qwen/qwen3-32b", "llama-3.3-70b-versatile"}` | Fallback models for Groq. |
+| `debounce_ms`               | `integer`          | `3000`                                   | Minimum time (ms) between diagnostics for the same file. |
+| `max_file_size`             | `integer`          | `10000`                                  | Maximum number of lines to analyse. Larger files are skipped. |
+| `timeout`                   | `integer`          | `99999`                                  | Maximum wait time (seconds) for the LLM to respond. |
+| `show_progress`             | `boolean`          | `true`                                   | Show periodic progress notifications via `vim.notify()`. |
+| `show_progress_every_ms`    | `integer`          | `5000`                                   | Interval between progress notifications. |
+| `ai_diagnostics_symbol`     | `string`           | `"AI"`                                   | Sign text for AI diagnostics (⚠️ currently not working – planned). |
+| `cmd`                       | `table` (strings)  | `{"ai-diagnos-lsp"}`                     | Command to start the LSP. |
+| `filetypes`                 | `table` (strings)  | `{"python", "go", "lua"}`                | Filetypes to attach the LSP to. |
+| `root_dir`                  | `function`         | `lspconfig.util.root_pattern(".git")`    | Root directory detection. |
+| `on_attach`                 | `function`         | `nil`                                    | Callback when the LSP attaches. |
+| `capabilities`              | `table`            | `nil`                                    | LSP client capabilities. |
 
-| parameter | role | example value | optional ? |
-|-------|-------|------|-------|
-| api_key_openrouter | I is an required parameter, used to acsess the API. | "sadgubwqeogfUWHEGHBAWELIGUBAIRUGBeirgbea" | requred for openrouter or omniprovider. Not if not using that. |
-| model_openrouter |  optional parameter, tells the plugin wich OpenRouter model to use, defaults to antropic/claude-3.5-sonnet. | "anthropic/claude-3.5-sonnet" | optional |
-| debounce_ms |  optional parameter, defines how muchtime is the minimum between 2 writes is required to activate a new API call, to prevent the write spam from causing problmes. | 3000 | optional |
-| max_file_size |  optional parameter, defines the maimal file size (in lines) in order to prevent the model from analysing files that are to big. | 12000 | optional |
-| show_progress |  Boolean, optional parameter. It uses vim.notify("notification") to inform the users of the progress, so the users dont try to save the file again, since API calls create invisible wait perioudes. | true | optional |
-| root_dir |  optional parameter, tells the LSP how to find the root dir. Default value is ".git". | TODO: ADD | optinal |
-| cmd |  optional parameter, lets you change the command for initialising the connection with LSP. May or may not be usefull .  | TODO: ADD | optinal |
-| show_progress_every_ms |  optional, Tells the interval of how often the LSP should ping them with "Im still running" | TODO: ADD | optional |
-| ai_diagnostics_symbol |  optional, Tells the client how to display AI diagnostics. Default value is "AI" NOTE THAT IT DOESNT WORK RIGHT NOW. | "AI" | optional | 
-| model_gemini | optional parameter. Tells the LSP wich gemini model to use | gemini-2.5-flash | optional |
-| model_groq | optional parameter. Tells the LSP wich groq model to use | openai/gpt-oss-20b | optional |
-| fallback_models_gemini | Optional parameter. Tells wich models to fallback to if the main model fails. | gemini-2.5-flash-lite | optional |
-| fallback_models_groq | Optional parameter. Tells wich models to fallback to if the main model fails. | openai/gpt-oss-120b | optional |
-| use_gemini | tells the system to use gemini. The same way as defined above. | required |
-| use_openrouter | tells the system to use openrouter. | required |
-| use_omniprovider | tells the system to use omniprovider | requred |
-| api_key_gemini | The api key for gemini | "aofnsrbgosurgbiaebrgi" | required for gemini usage |
-| api_key_groq | the api key for groq usage | "gwoarugpaenmcaocr" | required for groq usage | 
+> ⚠️ **Important**  
+> Only **one** of `use_gemini`, `use_openrouter`, `use_groq`, or `use_omniprovider` should be `true` at a time. The plugin does **not** enforce this; enabling more than one leads to undefined behaviour.
 
-## Commands:
-1. AIClear --> clears all the AI diagnostics
-2. AIAnalyse --> forces rediagnosing the file.
-3. AIStatus --> Outputs status   
-> [!NOTE]
-> Doesnt work right now. I am still implementing that.
+## Usage
 
-# Architecture
-(The new)
-ai_diagnos.lua is the file responsible for calling python LSP .
-AI_LSP.py is the python based AI LSP, wich does the actual AI stuff. 
+Once configured, the LSP client is automatically started for matching filetypes. Diagnostics are requested:
 
-AI_LSP.py will use Langhchain with Openrouter API for the actual analysis and diagnostics. 
-ai_diagnos.lua is the lua file responsible for providing tasks and context to the AI_LSP 
+- When a file is **opened**
+- When a file is **saved**
+- Manually via the `:AIAnalyse` command
 
-## ai_diagnos.lua architecture
-I dont know yet myself. 
-> [!NOTE]
-> Each one of the analysers methods are exposed as Editor Commands and can be called manually or via autocmd. Autocmd is also the recommended way to do that and to configure the plugin. It exposes an option to do so automatically. 
+### User Commands
 
-## ai_diagnos_lsp/main.py
+| Command              | Description |
+|----------------------|-------------|
+| `:AIAnalyse`        | Force a new AI diagnostic analysis for the current buffer. |
+| `:AIClear`          | Clear AI diagnostics for the current buffer. |
+| `:AIClearAll`       | Clear **all** AI diagnostics across all buffers. |
+| `:AIStatus`         | (⚠️ not yet implemented) Show current status of the AI LSP. |
 
-Composes and exposes the analysers functions, and cleanly exposes them for the lua part. 
-It does so in the same way an actual LSP would do it. 
-That also lets the projekt be expanded into a fullblown LSP. 
-So, it uses pygls and composes the LSP. 
+## Supported Providers
 
-The analyser is the analyser.py file that gets functions imported from and just used. 
+### Gemini
+- Uses `langchain-google-genai`.
+- Configure with `use_gemini = true`, `api_key_gemini`, and optionally `model_gemini` / `fallback_models_gemini`.
 
-### analysers/
+### OpenRouter
+- Uses `langchain-openai` (OpenAI‑compatible endpoint).
+- Configure with `use_openrouter = true`, `api_key_openrouter`, and optionally `model_openrouter`.
+- No model‑level fallback – OpenRouter itself handles fallbacks.
 
-For now it only has one analysis method, wich is the basic analysis method. 
-I will add other methods in the future, as well as make wich one touse as the base a configurable choise. 
+### Groq
+- Uses `langchain-groq`.
+- Configure with `use_groq = true`, `api_key_groq`, and optionally `model_groq` / `fallback_models_groq`.
 
-#### chains/
+### Omniprovider
+- Tries **OpenRouter** first, then **Gemini**, then **Groq**.
+- Requires all three API keys.
+- Configure with `use_omniprovider = true` (this is the default).
+- Each provider may still use its own model‑level fallbacks.
 
-Here I put the Langchain chains I have
+## How It Works
 
-Each one of them is basically the same thing, but has a different prompt, and these are activated in different times. 
-> [!NOTE]
-> The lua part exposes editor commands that activate each one of those. 
+The plugin is split into two parts:
 
+1. **Neovim Lua client** (`ai_diagnos.lua`)  
+   - Registers the LSP server via `lspconfig`.  
+   - Forwards user configuration as `init_options`.  
+   - Sets up auto‑commands and user commands.  
+   - Provides a fallback build routine.
 
-# Contributing 
+1. **Python LSP server** (`main.py`)  
+   - Built with [`pygls`](https://pygls.readthedocs.io/).  
+   - Receives `initialize` with configuration.  
+   - On `didOpen` / `didSave` / custom command, starts a **worker thread** that:  
+     - Verifies file size and debounce.  
+     - Builds the appropriate LangChain (Gemini, OpenRouter, Groq, or Omniprovider).  
+     - Invokes the chain with the file content.  
+     - Parses the JSON response (using Pydantic).  
+     - Uses `grep()` to locate each diagnostic by **exact source snippet** (the AI is instructed to copy the exact code fragment).  
+     - Converts the result to LSP `Diagnostic` objects.  
+     - Publishes diagnostics via `textDocument/publishDiagnostics` (pull diagnostics are also supported).
 
-Any contribution in any form is welcomed. 
-It may take a while for me to actually merge a PR, but I am still the maintainer and am still working on this. Not actively though, as I am genuenly bad at lua. 
+- If the AI hallucinates a location that cannot be found, the diagnostic is silently skipped.
+- All API calls are **non‑blocking**; Neovim remains responsive.
+
+## Troubleshooting
+
+### The LSP server does not start
+
+- Check that the Python virtual environment exists and is installed:  
+  `~/.local/share/nvim/lazy/ai_diagnos.nvim/python3/venv/bin/python -m ai_diagnos_lsp`
+- Ensure you have all required API keys in your environment or config.
+- Set the environment variable `AI_DIAGNOS_LOG=1` to enable detailed logging to `ai_diagnos_lsp.log` in Neovim’s working directory.
+
+### Build fails / “command not found”
+
+- Follow the **manual installation** steps under [Installation](#installation).
+
+### Diagnostics never appear
+
+- Check the log file for errors (see above).
+- Verify that the file type is in `filetypes` (default: `python`, `go`, `lua`).
+- Ensure the file size is below `max_file_size`.
+- If using Omniprovider, confirm all three API keys are set – otherwise the chain will fail.
+
+## Roadmap / TODO
+
+- [ ] Fix build system (cross‑platform, reliable)
+- [ ] Implement `AIStatus` command
+- [ ] Make `ai_diagnostics_symbol` actually work
+- [ ] Add caching system for repeated diagnostics
+- [ ] Expose more chain types (e.g. performance analysis, security audit)
+- [ ] Support additional providers (AWS Bedrock, Azure OpenAI, etc.)
+
+## Contributing
+
+Contributions of any kind are welcome!  
+Open an issue or a pull request – but please be patient, the maintainer is still learning Lua.
+
+## License
+
+MIT
+
+---
 
