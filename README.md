@@ -88,7 +88,7 @@ Call `require("ai-diagnostics").setup({...})` in your Neovim config. All paramet
 | `timeout`                   | `integer`          | `99999`                                  | Maximum wait time (seconds) for the LLM to respond. |
 | `show_progress`             | `boolean`          | `true`                                   | Show periodic progress notifications via `vim.notify()`. |
 | `show_progress_every_ms`    | `integer`          | `5000`                                   | Interval between progress notifications. |
-| `ai_diagnostics_symbol`     | `string`           | `"AI"`                                   | Sign text for AI diagnostics (⚠️ currently not working – planned). |
+| `ai_diagnostics_symbol`     | `string`           | `"AI"`                                   | Sign text for AI diagnostics. |
 | `cmd`                       | `table` (strings)  | `{"ai-diagnos-lsp"}`                     | Command to start the LSP. |
 | `filetypes`                 | `table` (strings)  | `{"python", "go", "lua"}`                | Filetypes to attach the LSP to. |
 | `root_dir`                  | `function`         | `lspconfig.util.root_pattern(".git")`    | Root directory detection. |
@@ -183,7 +183,6 @@ The plugin is split into two parts:
 
 ## Roadmap / TODO
 
-- [ ] Make `ai_diagnostics_symbol` actually work
 - [ ] Add a diagnostics storage and retrieval system for repeted or multiple diagnostics on the same file. 
 - [ ] Expose more analysers and analysis types (e.g. logic error specific, performance specific, style specific, etc. )
 - [ ] Implement the AI status command
