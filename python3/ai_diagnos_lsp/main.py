@@ -17,6 +17,10 @@ import time
 from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunctionWorker
 
 class AI_diagnos_lsp(LanguageServer):
+    """
+    My language server class. 
+    It is pull diagnostics based. 
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.diagnostics = {}
@@ -32,13 +36,18 @@ class AI_diagnos_lsp(LanguageServer):
         self.diagnostics_lock = threading.Lock()
 
     def BasicDiagnose(self, doc: TextDocument):
+        """
+        The basic diagnose function. It checks if the document should be diagnosed
+        if yes it starts a diagnostics thread. 
+        If no, it ... says so . 
+        """
 
         max_file_size = self.config["max_file_size"]
 
         debounce_ms = self.config["debounce_ms"]
         
         if len(doc.lines) > max_file_size:
-            self.window_show_message(types.ShowMessageParams(types.MessageType(2), "File size is to big. Rejecting"))
+            self.window_show_message(types.ShowMessageParams(types.MessageType(2), "File size is too big. Rejecting"))
             return
 
         if doc.uri not in self.last_diagnostic_time:
@@ -53,10 +62,17 @@ class AI_diagnos_lsp(LanguageServer):
         self.last_diagnostic_time[doc.uri] = time.time()
 
 def main():
-    server = AI_diagnos_lsp('ai_diagnos', "v0.7 DEV")
+    """
+    The server setup function. 
+    """
+    server = AI_diagnos_lsp('ai_diagnos', "v0.8 DEV")
     
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AI_diagnos_lsp, params: types.InitializeParams):
+        """
+        The configuration getting and saving function. 
+        pretty much sets the ls.config map
+        """
 
         assert params.initialization_options is not None
         for i in params.initialization_options:
@@ -140,7 +156,7 @@ def main():
     def ClearAIDiagnostics(ls: AI_diagnos_lsp, params: Sequence[Any | None]):
         """ Clears AI diagnostics for the provided URI """
         ls.diagnostics[params[0]] = {}
-        ls.window_show_message(types.ShowMessageParams(types.MessageType(3), "succesfully cleared the diagnostics"))
+        ls.window_show_message(types.ShowMessageParams(types.MessageType(3), "successfully cleared the diagnostics"))
 
     @server.command("Clear.AIDiagnostics.All")
     def ClearAllAIDiagnostics(ls: AI_diagnos_lsp, params: Sequence[Any | None]):

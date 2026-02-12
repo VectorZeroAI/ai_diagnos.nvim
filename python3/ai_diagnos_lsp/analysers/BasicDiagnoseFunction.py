@@ -13,8 +13,14 @@ from ai_diagnos_lsp.analysers.chains.BasicChainOpenrouter import BasicChainOpenr
 from ai_diagnos_lsp.utils.grep import grep
 
 def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
+    """
+    The Analyser and diagnostics provider thread . 
+    """
 
     try:
+
+        # ---- The section that sets up the variables.  -----
+
         diagnostics = []
 
         severity_map = {
@@ -50,8 +56,8 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
         ls.window_show_message(types.ShowMessageParams(types.MessageType(3), f"The timeout recieved is the following : {timeout}"))
 
 
-
-
+        
+        #  ------- The Basic Chain setup section --------
 
 
 
@@ -87,7 +93,12 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
             
 
 
-
+        # ------- The chain invokation part.  -------
+        # It functions kinda like this: 
+        # It sets up a bunch of events
+        # Then it starts the chain onvokation in a separate thread. 
+        # Then it also starts a thread that pings the user that the server is doing something
+        # Then it just checks for timeout, as well as for faliure.  Thats it. 
 
 
         langchain_completed_event = threading.Event()
@@ -149,9 +160,7 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
 
 
 
-
-
-
+        # --------- The diagnostics handling section -----------
 
 
 
@@ -169,14 +178,15 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
                 pos_char = pos[1]
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
                     logging.info(f"found {i.location} at line : {pos_line}, char : {pos_char}")
-            except IndexError:
+            except IndexError as e:
                 # Ignore the diagnostic entirely, because if no matches were found, it means that the AI
                 # halucinated, wich makes this one specific diagnostic is wrong, wich is not worth the hassle
                 # to try to use. So it is skipped. This is by design, not an error. 
 
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info("Errored out. Most likely a halucinated citation.")
+                    logging.info(f"Errored out. Most likely a halucinated citation. The error : {e}")
                 continue 
+
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.info(f"DIAGNOSTIC : error message:  {i.error_message} ; severity level : {i.severity_level} ; pos line : {pos_line} ; pos char :  {pos_char}")
 
@@ -190,14 +200,15 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
                             start=types.Position(pos_line, pos_char),
                             end=types.Position(pos_line, pos_char)
                             ), 
-                        source="AI diagnos LSP", data="AI",code= "AI",
+                        source="AI diagnos LSP", data="AI",code="AI",
                         code_description=types.CodeDescription(" This is AI generated Diagnostics. I am putting this wherever I can because why not ?  ")
                         )
                     )
 
 
 
-
+        # -------- The diagnostics publishing section ------------
+        # Also the last section of the thread. 
 
 
 
@@ -219,7 +230,10 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
             return logging.info("Worker thread ending")
 
         return logging.warning("Worker thread ending without publishing diagnostics")
+
+    
     except Exception as e:
+        # And error handling for the whole thread
         ls.window_show_message(types.ShowMessageParams(types.MessageType(1), f"The whole worker thread errored out with the following error: {e}"))
         return
 
