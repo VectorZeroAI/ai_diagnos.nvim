@@ -2,9 +2,7 @@ local M = {}
 
 -- Setup function called by users in their config
 function M.setup(user_config)
-
     local configs = require('lspconfig.configs')
-
     if user_config.use_gemini == true or user_config.use_omniprovider == true then
         if user_config.api_key_gemini == nil then
             error("For your usage configuration, you must provide a gemini api key !")
@@ -48,8 +46,6 @@ function M.setup(user_config)
         fallback_models_groq = {
             "openai/gpt-oss-20b", "openai/gpt-oss-safeguard-20b", "qwen/qwen3-32b", "llama-3.3-70b-versatile"
         }
-
-
     }
 --    M.config = {
 --            cmd = user_config.cmd or default_config.cmd,
@@ -91,13 +87,9 @@ function M.setup(user_config)
     local user_config_sanitised = user_config
     user_config_sanitised.root_dir = nil
     user_config_sanitised.capabilities = nil
-    
     for key, value in pairs(user_config_sanitised) do
         M.config.init_options[key] = value
     end
-    
-
-
     -- Register the LSP server configuration
     local lspconfig = require("lspconfig")
     -- Define the server if not already defined
@@ -133,7 +125,6 @@ function M.setup(user_config)
             cmd = string.format("%s -m ai_diagnos_lsp", my_python),
             filetypes = M.config.filetypes,
             root_dir = M.config.root_dir,
-            settings = M.config.settings,
             on_attach = M.config.on_attach,
             capabilities = M.config.capabilities,
             init_options = M.config.init_options,
@@ -196,9 +187,6 @@ function M.setup(user_config)
 
         end
     })
-        
-
-
 end
 
 function M.build()
@@ -210,7 +198,9 @@ function M.build()
         on_exit=function ()
             Job:new({
                 command=string.format("%s -m pip install -e %s/../python3/.", my_python, script_path),
-                on_exit=print('Dependancies installed ! ')
+                on_exit=function ()
+                    print('Dependancies installed ! ')
+                end
             })
         end,
         on_stderr=function()
