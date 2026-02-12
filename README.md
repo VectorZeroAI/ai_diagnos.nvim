@@ -67,6 +67,7 @@ Technically you can just use omniprovider with garbage as api_keys for all the p
 | use_omniprovider | tells the system to use omniprovider | requred |
 | api_key_gemini | The api key for gemini | "aofnsrbgosurgbiaebrgi" | required for gemini usage |
 | api_key_groq | the api key for groq usage | "gwoarugpaenmcaocr" | required for groq usage | 
+|-------|-------|------|-------|
 
 ## Commands:
 1. AIClear --> clears all the AI diagnostics
