@@ -87,7 +87,7 @@ function M.setup(user_config)
             capabilities = user_config.capabilities or default_config.capabilities,
             init_options = {},
     }
-    vim.tbl_deep_extend("force", default_config, user_config)
+    user_config = vim.tbl_deep_extend("force", default_config, user_config)
     for key, value in pairs(user_config) do
         M.config.init_options[key] = value
     end
