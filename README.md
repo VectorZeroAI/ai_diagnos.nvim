@@ -193,11 +193,6 @@ The plugin is split into two parts:
 ## Contributing
 
 Contributions of any kind are welcome!  
-Open an issue or a pull request – but please be patient, the maintainer is still learning Lua.
-
-## License
-
-MIT
-
----
+Open an issue or a pull request.  
+But do not expect much, I am still a beginner.
 
