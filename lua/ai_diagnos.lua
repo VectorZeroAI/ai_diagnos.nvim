@@ -88,7 +88,11 @@ function M.setup(user_config)
             init_options = {},
     }
     user_config = vim.tbl_deep_extend("force", default_config, user_config)
-    for key, value in pairs(user_config) do
+    local user_config_sanitised = user_config
+    user_config_sanitised.root_dir = nil
+    user_config_sanitised.capabilities = nil
+    
+    for key, value in pairs(user_config_sanitised) do
         M.config.init_options[key] = value
     end
     
