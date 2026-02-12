@@ -70,6 +70,7 @@ function M.setup(user_config)
                 model_groq = user_config.model_groq or default_config.model_groq,
                 fallback_models_groq = user_config.fallback_models_groq or default_config.fallback_models_groq,
                 use_groq = user_config.use_groq or default_config.use_groq,
+                -- TODO : FIX THIS MONSTROUSITY
             },
         }
     -- Register the LSP server configuration
