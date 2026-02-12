@@ -36,6 +36,10 @@ function M.setup(user_config)
         use_omniprovider = true,
         fallback_models_gemini = {
             "gemini-2.5-flash", "gemini-3-flash-preview"
+        },
+        model_groq = "openai/gpt-oss-120b",
+        fallback_models_groq = {
+            "openai/gpt-oss-20b", "openai/gpt-oss-safeguard-20b", "qwen/qwen3-32b", "llama-3.3-70b-versatile"
         }
 
     }
@@ -60,6 +64,9 @@ function M.setup(user_config)
                 use_openrouter = user_config.use_openrouter or default_config.use_openrouter,
                 use_omniprovider = user_config.use_omniprovider or default_config.use_omniprovider,
                 fallback_models_gemini = user_config.fallback_models_gemini or default_config.fallback_models_gemini,
+                api_key_groq = user_config.api_key_groq,
+                model_groq = user_config.model_groq or default_config.model_groq,
+                fallback_models_groq = user_config.fallback_models_groq or default_config.fallback_models_groq,
             },
         }
     -- Register the LSP server configuration

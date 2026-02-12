@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from typing import Sequence, Any
-from langchain_core.runnables import RunnableSerializable
+from langchain_core.runnables import RunnableWithFallbacks
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import SecretStr
 import logging
@@ -8,7 +8,7 @@ import os
 
 def GeminiLlmFactory(model_gemini: str, api_key_gemini: str,
                      fallback_gemini_models: Sequence[str] | None = None
-                     ) -> RunnableSerializable[Any, Any]:
+                     ) -> ChatGoogleGenerativeAI | RunnableWithFallbacks[Any, Any]:
     llm = ChatGoogleGenerativeAI(
             model=model_gemini,
             api_key=SecretStr(api_key_gemini), max_retries = 0

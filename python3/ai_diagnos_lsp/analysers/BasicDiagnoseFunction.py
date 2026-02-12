@@ -49,51 +49,46 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
 
         ls.window_show_message(types.ShowMessageParams(types.MessageType(3), f"The timeout recieved is the following : {timeout}"))
 
+
+
+
+
+
+
         if ls.config["use_omniprovider"]:
 
-            model_openrouter = ls.config["model_openrouter"]
-            api_key_openrouter = ls.config["api_key_openrouter"]
-            model_gemini = ls.config["model_gemini"]
-            api_key_gemini = ls.config["api_key_gemini"]
-
-            fallback_models_gemini = ls.config.get("fallback_models_gemini")
-
             BasicChain = BasicChainOmniproviderFactory(
-                    model_openrouter=model_openrouter,
-                    api_key_openrouter=api_key_openrouter,
-                    api_key_gemini=api_key_gemini,
-                    model_gemini=model_gemini,
-                    fallback_models_gemini=fallback_models_gemini
+                    model_openrouter=ls.config["model_openrouter"],
+                    api_key_openrouter=ls.config["api_key_openrouter"],
+                    api_key_gemini=ls.config["api_key_gemini"],
+                    model_gemini=ls.config["model_gemini"],
+                    fallback_models_gemini=ls.config.get("fallback_models_gemini"),
+                    api_key_groq=ls.config["api_key_groq"],
+                    model_groq=ls.config["model_groq"],
+                    fallback_models_groq=ls.config.get("fallback_models_groq")
                     )
 
         elif ls.config["use_gemini"]:
 
-            model_gemini = ls.config["model_gemini"]
-            api_key_gemini = ls.config["api_key_gemini"]
-
-            try:
-                fallback_models_gemini = ls.config["fallback_models_gemini"]
-            except Exception:
-                fallback_models_gemini = None
-
             BasicChain = BasicChainGeminiFactory(
-                    api_key_gemini=api_key_gemini,
-                    model_gemini=model_gemini,
-                    fallback_models_gemini=fallback_models_gemini
+                    api_key_gemini=ls.config["api_key_gemini"],
+                    model_gemini=ls.config["model_gemini"],
+                    fallback_models_gemini=ls.config.get("fallback_models_gemini")
                     )
 
         elif ls.config["use_openrouter"]:
-
-            model_openrouter = ls.config["model_openrouter"]
-            api_key_openrouter = ls.config["api_key_openrouter"]
-
             BasicChain = BasicChainOpenrouterFactory(
-                    model_openrouter, api_key_openrouter
+                    model_openrouter=ls.config["model_openrouter"],
+                    api_key_openrouter=ls.config["api_key_openrouter"]
                     )
         else:
             ls.window_show_message(types.ShowMessageParams(types.MessageType(1), "INVALID CONFIGURATION RECIEVED. One of use parameters must be true !"))
             raise RuntimeError("INVALID CONFIGURATION RECIEVED. One of use parameters must be true !")
             
+
+
+
+
 
         langchain_completed_event = threading.Event()
         langchain_timed_out = threading.Event()
@@ -151,6 +146,15 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
             ls.window_show_message(types.ShowMessageParams(types.MessageType(1), "Langchain FAILED"))
             return
 
+
+
+
+
+
+
+
+
+
         for i in tmp.diagnostics:
             try:
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
@@ -190,6 +194,13 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
                         code_description=types.CodeDescription(" This is AI generated Diagnostics. I am putting this wherever I can because why not ?  ")
                         )
                     )
+
+
+
+
+
+
+
 
         _, previous = ls.diagnostics.get(document.uri, (0, []))
         
