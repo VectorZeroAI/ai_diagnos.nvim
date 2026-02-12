@@ -15,3 +15,4 @@ python3/AI_LSP.egg-info/dependency_links.txt
 ai_diagnos_lsp.log
 python3/AI_LSP.egg-info/entry_points.txt
 python3/AI_LSP.egg-info/top_level.txt
+python3/ai_diagnos_lsp/analysers/chains/LLM/__pycache__/BasicGroqLLM.cpython-312.pyc
