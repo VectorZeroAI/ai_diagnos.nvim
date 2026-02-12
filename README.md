@@ -124,7 +124,7 @@ Once configured, the LSP client is automatically started for matching filetypes.
 ### OpenRouter
 - Uses `langchain-openai` (OpenAI‑compatible endpoint).
 - Configure with `use_openrouter = true`, `api_key_openrouter`, and optionally `model_openrouter`.
-- No model‑level fallback – OpenRouter itself handles fallbacks.
+- No model fallbacks, because they make no sense for openrouter, with how it counts usage.
 
 ### Groq
 - Uses `langchain-groq`.
