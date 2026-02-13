@@ -35,7 +35,6 @@ def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) 
             except Exception as e:
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
                     logging.error(f"regex inside grep errored out for the following reason : {e}")
-
         
         return matches
     except Exception as e:
