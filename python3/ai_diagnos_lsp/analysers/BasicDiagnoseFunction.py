@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
+from __future__ import annotations
 import time
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
 from lsprotocol import types
 from pygls.workspace import TextDocument
 import logging
@@ -12,7 +14,8 @@ from ai_diagnos_lsp.analysers.chains.BasicChainOpenrouter import BasicChainOpenr
 
 from ai_diagnos_lsp.utils.grep import grep
 
-from ai_diagnos_lsp.AIDiagnosLSPClass import AIDiagnosLSP
+if TYPE_CHECKING:
+    from ai_diagnos_lsp.AIDiagnosLSPClass import AIDiagnosLSP
 
 def BasicDiagnoseFunctionWorker(document: TextDocument, ls: AIDiagnosLSP):
     """
