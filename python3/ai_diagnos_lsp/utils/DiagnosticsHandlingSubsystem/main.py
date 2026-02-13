@@ -62,9 +62,13 @@ class DiagnosticsHandlingSubsystemClass:
 
 
     def register_new_diagnostic(self, diagnostics: GeneralDiagnosticsPydanticObjekt, document_uri: str, analysis_type: str) -> bool:
-        self.curr.execute("""
-        INSERT INTO diagnostics(uri, diagnostics, created_at) VALUES(?, ?, ?)
-                          """, (document_uri, diagnostics.model_dump_json(), time.time()))
+        try:
+            self.curr.execute("""
+            INSERT INTO diagnostics(uri, diagnostics, created_at) VALUES(?, ?, ?)
+                              """, (document_uri, diagnostics.model_dump_json(), time.time()))
+        except Exception as e:
+            if os.getenv("AI_DIAGNOS_LOG") is not None:
+                logging.error(f"Couldnt register new diagnosic due to following error: {e}")
 
 
     def publish_diagnostics_for_file(self, document_uri: str) -> bool:
@@ -79,11 +83,11 @@ class DiagnosticsHandlingSubsystemClass:
             pydantic_objekts_list = []
             for i in json_diagnostics_list:
                 pydantic_objekts_list.append(
-                        GeneralDiagnosticsPydanticObjekt.model_validate_json(i)
+                        GeneralDiagnosticsPydanticObjekt.model_validate_json(i[0])
                         )
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.error("Couldnt load diagnostics")
+                logging.error(f"Couldnt load diagnostics due to following error : {e}")
             return False
 
         document = self.ls.workspace.get_text_document(document_uri)
@@ -102,10 +106,13 @@ class DiagnosticsHandlingSubsystemClass:
         try:
             with self.ls.diagnostics_lock:
                 self.ls.diagnostics[document_uri] = (document.version, diagnostics_lsprotocol_final_list)
+            self.ls.text_document_diagnostic_refresh(None)
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.error(f"Couldnt publish diagnostics due to the following reason: {e}")
             return False
+
+        return True
         
     
     def TTLBasedPruningThread(self):
