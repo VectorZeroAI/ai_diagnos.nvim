@@ -26,14 +26,18 @@ def main():
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AIDiagnosLSP, params: types.DidOpenTextDocumentParams):
-        """ Diagnose each document when it is opened """
+        """ Try co load saved diagnostics forthe file, if fails, analyse.  """
         doc = ls.workspace.get_text_document(params.text_document.uri)
-        ls.BasicDiagnose(doc)
+        try:
+            ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(doc.uri)
+        except Exception:
+            ls.BasicDiagnose(doc)
 
     @server.feature(types.TEXT_DOCUMENT_DID_SAVE)
     def did_save(ls: AIDiagnosLSP, params: types.DidSaveTextDocumentParams):
         """ Diagnose each document when it is saved, e.g. on save. As was done by the previous version of the plugin """
         doc = ls.workspace.get_text_document(params.text_document.uri)
+        ls.DiagnosticsHandlingSubsystem.register_file_write(doc.uri)
         ls.BasicDiagnose(doc)
 
     @server.feature(
