@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 import sqlite3
-from typing import Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING
 import time
 import logging
 import os
@@ -27,7 +27,7 @@ class DiagnosticsHandlingSubsystemClass:
         self.ls = ls
         self.ttl_seconds = ttl_seconds
 
-        self.conn = sqlite3.connect(sqlite_db_name, autocommit=True)
+        self.conn = sqlite3.connect(sqlite_db_name, autocommit=True, check_same_thread=False)
         self.curr = self.conn.cursor()
         self.curr.execute("""
         CREATE TABLE IF NOT EXISTS files(
@@ -41,7 +41,7 @@ class DiagnosticsHandlingSubsystemClass:
 
         self.curr.execute("""
         CREATE TABLE IF NOT EXISTS diagnostics(
-            uri TEXT NOT NULL,
+            uri TEXT UNIQUE,
             diagnostics TEXT UNIQUE,
             created_at REAL NOT NULL
             )
@@ -63,6 +63,9 @@ class DiagnosticsHandlingSubsystemClass:
 
 
     def register_new_diagnostic(self, diagnostics: GeneralDiagnosticsPydanticObjekt, document_uri: str, analysis_type: str) -> bool:
+        """
+        Registers the diagnostic to the DataBase. DOES NOT PUBLISH THEM TO THE CLIENT
+        """
         try:
             self.curr.execute("""
             INSERT INTO diagnostics(uri, diagnostics, created_at) VALUES(?, ?, ?)
@@ -72,17 +75,19 @@ class DiagnosticsHandlingSubsystemClass:
                 logging.error(f"Couldnt register new diagnosic due to following error: {e}")
             return False
         else:
+            self.ls.workspace_diagnostic_refresh(None).result()
             return True
 
 
     def publish_diagnostics_for_file(self, document_uri: str) -> bool:
         """
         This function DIRECTLY PUBLISHES the diagnostics for a file. 
+        MUST BE CALLED AFTER register_new_diagnostic.
         """
         try:
             json_diagnostics_list = self.curr.execute("""
             SELECT diagnostics FROM diagnostics WHERE uri = ?
-                              """, (document_uri)).fetchall()
+                              """, (document_uri,)).fetchall()
             
             pydantic_objekts_list = []
             for i in json_diagnostics_list:

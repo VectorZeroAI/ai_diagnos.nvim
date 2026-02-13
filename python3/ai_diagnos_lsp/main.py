@@ -23,6 +23,10 @@ def main():
         for i in params.initialization_options:
             ls.config[i] = params.initialization_options.get(i)
 
+    @server.feature(types.TEXT_DOCUMENT_DID_CHANGE)
+    def on_did_change(ls: AIDiagnosLSP, params: types.DidChangeTextDocumentParams):
+        """ Publish diagnostics from DB to the client on change. e.g. refresh them. """
+        ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(params.text_document.uri)
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AIDiagnosLSP, params: types.DidOpenTextDocumentParams):
@@ -31,6 +35,7 @@ def main():
 
         if not ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(doc.uri):
             ls.BasicDiagnose(doc)
+            ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(doc.uri)
 
     @server.feature(types.TEXT_DOCUMENT_DID_SAVE)
     def did_save(ls: AIDiagnosLSP, params: types.DidSaveTextDocumentParams):
@@ -38,6 +43,7 @@ def main():
         doc = ls.workspace.get_text_document(params.text_document.uri)
         ls.DiagnosticsHandlingSubsystem.register_file_write(doc.uri)
         ls.BasicDiagnose(doc)
+        ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(doc.uri)
 
     @server.feature(
             types.TEXT_DOCUMENT_DIAGNOSTIC,

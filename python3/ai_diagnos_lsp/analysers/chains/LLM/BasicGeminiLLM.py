@@ -17,7 +17,7 @@ def GeminiLlmFactory(model_gemini: str, api_key_gemini: str,
 
     llm = ChatGoogleGenerativeAI(
             model=model_gemini,
-            api_key=SecretStr(api_key_gemini), max_retries = 0
+            api_key=SecretStr(api_key_gemini), max_retries=0
             )
 
     if fallback_gemini_models is not None:
@@ -28,7 +28,7 @@ def GeminiLlmFactory(model_gemini: str, api_key_gemini: str,
         for i in fallback_gemini_models:
             tmp_llm = ChatGoogleGenerativeAI(
                     model=i,
-                    api_key=SecretStr(api_key_gemini), max_retries = 0
+                    api_key=SecretStr(api_key_gemini), max_retries=0
                     )
             fallback_llms_list.append(tmp_llm)
         llm = llm.with_fallbacks(fallback_llms_list)
