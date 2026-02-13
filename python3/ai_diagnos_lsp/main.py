@@ -10,7 +10,7 @@ def main():
     """
     The server setup function. 
     """
-    server = AIDiagnosLSP('ai_diagnos', "v0.8.3 DEV")
+    server = AIDiagnosLSP('ai_diagnos', "v0.8.4 DEV")
     
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AIDiagnosLSP, params: types.InitializeParams):
@@ -26,16 +26,16 @@ def main():
     @server.feature(types.TEXT_DOCUMENT_DID_CHANGE)
     def on_did_change(ls: AIDiagnosLSP, params: types.DidChangeTextDocumentParams):
         """ Publish diagnostics from DB to the client on change. e.g. refresh them. """
-        ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(params.text_document.uri)
+        ls.DiagnosticsHandlingSubsystem.load_diagnostics_for_file(params.text_document.uri)
 
     @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
     def did_open(ls: AIDiagnosLSP, params: types.DidOpenTextDocumentParams):
         """ Try co load saved diagnostics forthe file, if fails, analyse.  """
         doc = ls.workspace.get_text_document(params.text_document.uri)
 
-        if not ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(doc.uri):
+        if not ls.DiagnosticsHandlingSubsystem.load_diagnostics_for_file(doc.uri):
             ls.BasicDiagnose(doc)
-            ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(doc.uri)
+            ls.DiagnosticsHandlingSubsystem.load_diagnostics_for_file(doc.uri)
 
     @server.feature(types.TEXT_DOCUMENT_DID_SAVE)
     def did_save(ls: AIDiagnosLSP, params: types.DidSaveTextDocumentParams):
@@ -43,7 +43,7 @@ def main():
         doc = ls.workspace.get_text_document(params.text_document.uri)
         ls.DiagnosticsHandlingSubsystem.register_file_write(doc.uri)
         ls.BasicDiagnose(doc)
-        ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(doc.uri)
+        ls.DiagnosticsHandlingSubsystem.load_diagnostics_for_file(doc.uri)
 
     @server.feature(
             types.TEXT_DOCUMENT_DIAGNOSTIC,

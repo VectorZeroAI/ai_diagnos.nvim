@@ -151,11 +151,11 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls: AIDiagnosLSP):
             ls.window_show_message(types.ShowMessageParams(types.MessageType(1), "Langchain FAILED"))
             return
         try:
-            ls.DiagnosticsHandlingSubsystem.register_new_diagnostic(diagnostics=tmp,
+            ls.DiagnosticsHandlingSubsystem.save_new_diagnostic(diagnostics=tmp,
                                                                     document_uri=document.uri,
                                                                     analysis_type="Basic"
                                                                 )
-            ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(document.uri)
+            ls.DiagnosticsHandlingSubsystem.load_diagnostics_for_file(document.uri)
 
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:

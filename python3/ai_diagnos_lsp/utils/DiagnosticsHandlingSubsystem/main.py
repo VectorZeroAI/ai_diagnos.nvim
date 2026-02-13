@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import sqlite3
+import threading
 from typing import TYPE_CHECKING
 import time
 import logging
@@ -23,10 +24,20 @@ class DiagnosticsHandlingSubsystemClass:
     
     Will propably get its own directory once actually implemented. 
     """
-    def __init__(self, ls: AIDiagnosLSP, sqlite_db_name: str = "diagnostics.db", ttl_seconds: int = 2592000) -> None:
+    def __init__(self,
+                 ls: AIDiagnosLSP,
+                 sqlite_db_name,
+                 ttl_seconds_until_deletion,
+                 ttl_seconds_until_invalidation
+                 ) -> None:
         self.ls = ls
-        self.ttl_seconds = ttl_seconds
+        self.ttl_seconds_until_deletion = ttl_seconds_until_deletion
+        self.db_lock = threading.Lock()
+        self.ttl_seconds_until_invalidation = ttl_seconds_until_invalidation
 
+        threading.Thread(target=self.TTLBasedDeletionThread, daemon=True, args=(self,)).start()
+        threading.Thread(target=self.TTLBasedDiagnosticsInvalidationThread, daemon=True, args=(self,)).start()
+        
         self.conn = sqlite3.connect(sqlite_db_name, autocommit=True, check_same_thread=False)
         self.curr = self.conn.cursor()
         self.curr.execute("""
@@ -41,35 +52,39 @@ class DiagnosticsHandlingSubsystemClass:
 
         self.curr.execute("""
         CREATE TABLE IF NOT EXISTS diagnostics(
-            uri TEXT UNIQUE,
+            uri TEXT NOT NULL,
             diagnostics TEXT UNIQUE,
             created_at REAL NOT NULL
             )
                           """)
 
     def register_file_write(self, document_uri: str):
-        tmp = self.curr.execute("""
-        SELECT uri FROM files WHERE uri = ?
-                                """, (document_uri,)).fetchall()
+        with self.db_lock:
+            tmp = self.curr.execute("""
+            SELECT uri FROM files WHERE uri = ?
+                                    """, (document_uri,)).fetchall()
 
         if len(tmp) > 0:
-            self.curr.execute("""
-            UPDATE files SET last_changed_at = ? WHERE uri = ?
-                              """, (time.time(), document_uri))
+            with self.db_lock:
+                self.curr.execute("""
+                UPDATE files SET last_changed_at = ? WHERE uri = ?
+                                  """, (time.time(), document_uri))
         else:
-            self.curr.execute("""
-            INSERT INTO files(last_changed_at, uri) VALUES (?, ?)
-                              """, (time.time(), document_uri))
+            with self.db_lock:
+                self.curr.execute("""
+                INSERT INTO files(last_changed_at, uri) VALUES (?, ?)
+                                  """, (time.time(), document_uri))
 
 
-    def register_new_diagnostic(self, diagnostics: GeneralDiagnosticsPydanticObjekt, document_uri: str, analysis_type: str) -> bool:
+    def save_new_diagnostic(self, diagnostics: GeneralDiagnosticsPydanticObjekt, document_uri: str, analysis_type: str) -> bool:
         """
         Registers the diagnostic to the DataBase. DOES NOT PUBLISH THEM TO THE CLIENT
         """
         try:
-            self.curr.execute("""
-            INSERT INTO diagnostics(uri, diagnostics, created_at) VALUES(?, ?, ?)
-                              """, (document_uri, diagnostics.model_dump_json(), time.time()))
+            with self.db_lock:
+                self.curr.execute("""
+                INSERT INTO diagnostics(uri, diagnostics, created_at) VALUES(?, ?, ?)
+                                  """, (document_uri, diagnostics.model_dump_json(), time.time()))
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.error(f"Couldnt register new diagnosic due to following error: {e}")
@@ -81,15 +96,16 @@ class DiagnosticsHandlingSubsystemClass:
             return True
 
 
-    def publish_diagnostics_for_file(self, document_uri: str) -> bool:
+    def load_diagnostics_for_file(self, document_uri: str) -> bool:
         """
         This function DIRECTLY PUBLISHES the diagnostics for a file. 
         MUST BE CALLED AFTER register_new_diagnostic.
         """
         try:
-            json_diagnostics_list = self.curr.execute("""
-            SELECT diagnostics FROM diagnostics WHERE uri = ?
-                              """, (document_uri,)).fetchall()
+            with self.db_lock:
+                json_diagnostics_list = self.curr.execute("""
+                SELECT diagnostics FROM diagnostics WHERE uri = ?
+                                  """, (document_uri,)).fetchall()
 
             if not len(json_diagnostics_list):
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
@@ -134,14 +150,48 @@ class DiagnosticsHandlingSubsystemClass:
         return True
         
     
-    def TTLBasedPruningThread(self):
-        raise NotImplementedError()
+    def TTLBasedDeletionThread(self):
+        with self.db_lock:
+            last_writes_list = self.curr.execute("""
+            SELECT last_changed_at, uri FROM files
+                              """).fetchall()
+        for i in last_writes_list:
+            if time.time() - i[0] > self.ttl_seconds_until_deletion:
+                with self.db_lock:
+                    self.curr.execute("""
+                    DELETE FROM files WHERE uri = ?
+                                      """, (i[1],))
+                    self.curr.execute("""
+                    DELETE FROM diagnostics WHERE uri = ?
+                                      """, (i[1],))
+        time.sleep(60)
+
+    def TTLBasedDiagnosticsInvalidationThread(self):
+        with self.db_lock:
+            all_diagnostics = self.curr.execute("""
+            SELECT uri, created_at, diagnostics FROM diagnostics
+                                          """).fetchall()
+
+        for i in all_diagnostics:
+            with self.db_lock:
+                file_change_time = self.curr.execute("""
+                SELECT last_changed_at FROM files WHERE uri = ?
+                                         """, (i[0],)).fetchone()
+            if i[1] - file_change_time[0] > self.ttl_seconds_until_invalidation:
+                with self.db_lock:
+                    self.curr.execute("""
+                    DELETE FROM diagnostics WHERE diagnostics = ?
+                                      """, (i[2],))
+                
+        time.sleep(2)
 
 def DiagnosticsHandlingSubsystemFactory(ls: AIDiagnosLSP,
                                         sqlite_db_name: str = "diagnostics.db",
-                                        ttl_seconds: int = 2592000
+                                        ttl_seconds_until_deletion: int = 2592000,
+                                        ttl_seconds_until_invalidation: int = 15
                                         ) -> DiagnosticsHandlingSubsystemClass:
     return DiagnosticsHandlingSubsystemClass(ls=ls, 
                                              sqlite_db_name=sqlite_db_name,
-                                             ttl_seconds=ttl_seconds
+                                             ttl_seconds_until_deletion=ttl_seconds_until_deletion,
+                                             ttl_seconds_until_invalidation= ttl_seconds_until_invalidation
                                              )
