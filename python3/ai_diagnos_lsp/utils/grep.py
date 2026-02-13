@@ -2,6 +2,7 @@ from typing import Union, List, Tuple
 import re
 import logging
 import os
+import html
 
 def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) -> List[Tuple[int, int]]:
     try:
@@ -19,6 +20,8 @@ def grep(pattern: str, lines: Union[str, List[str]], ignore_case: bool = False) 
         # Convert string to list if needed
         if isinstance(lines, str):
             lines = lines.splitlines()
+
+        pattern = html.unescape(pattern)
         
         flags = re.IGNORECASE if ignore_case else 0
         regex = re.compile(re.escape(pattern), flags)
