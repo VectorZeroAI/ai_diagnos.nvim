@@ -179,6 +179,13 @@ class DiagnosticsHandlingSubsystemClass:
                     logging.error(f"TTLBasedDeletionThread encoutered the following problem : {e}")
 
     def TTLBasedDiagnosticsInvalidationThread(self):
+        """
+    This thread checks for every diagnostic present its corresponding files last_change time, e.g. last
+    write to it time, then
+    matches it against the diagnostics creation time (via -), 
+    and if the result is smaller then self.ttl_seconds_until_invalidation, 
+    the diagnostic gets deleted from the DB. 
+        """
         while True:
             try:
                 with self.db_lock:
@@ -191,7 +198,12 @@ class DiagnosticsHandlingSubsystemClass:
                         file_change_time = self.curr.execute("""
                         SELECT last_changed_at FROM files WHERE uri = ?
                                                  """, (i[0],)).fetchone()
-                    if i[1] - file_change_time[0] > self.ttl_seconds_until_invalidation:
+
+                    if i[1] - file_change_time[0] < self.ttl_seconds_until_invalidation:
+                    # This line means : 
+                    # if diagnostic_creation_timestamp - last change time, in unix epoch
+                    # Wich is a negative float, IS SMALLER THEN a positive integer self.ttl seconds until invalidation
+                    # Then invalidate (delete) that diagnostics entry. 
                         with self.db_lock:
                             self.curr.execute("""
                             DELETE FROM diagnostics WHERE diagnostics = ?
