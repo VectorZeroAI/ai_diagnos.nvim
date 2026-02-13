@@ -104,7 +104,7 @@ def main():
         ls.window_show_message(types.ShowMessageParams(types.MessageType(3), "successfully cleared the diagnostics"))
 
     @server.command("Clear.AIDiagnostics.All")
-    def ClearAllAIDiagnostics(ls: AI_diagnAIDiagnosLSP, params: Sequence[Any | None]):
+    def ClearAllAIDiagnostics(ls: AIDiagnosLSP, params: Sequence[Any | None]):
         """ Clears ALL the AI diagnostics """
         for i in ls.diagnostics:
             ls.diagnostics[i] = {}
