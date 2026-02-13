@@ -59,21 +59,26 @@ class DiagnosticsHandlingSubsystemClass:
                           """)
 
     def register_file_write(self, document_uri: str):
-        with self.db_lock:
-            tmp = self.curr.execute("""
-            SELECT uri FROM files WHERE uri = ?
-                                    """, (document_uri,)).fetchall()
+        try:
+            with self.db_lock:
+                tmp = self.curr.execute("""
+                SELECT uri FROM files WHERE uri = ?
+                                        """, (document_uri,)).fetchall()
 
-        if len(tmp) > 0:
-            with self.db_lock:
-                self.curr.execute("""
-                UPDATE files SET last_changed_at = ? WHERE uri = ?
-                                  """, (time.time(), document_uri))
-        else:
-            with self.db_lock:
-                self.curr.execute("""
-                INSERT INTO files(last_changed_at, uri) VALUES (?, ?)
-                                  """, (time.time(), document_uri))
+            if len(tmp) > 0:
+                with self.db_lock:
+                    self.curr.execute("""
+                    UPDATE files SET last_changed_at = ? WHERE uri = ?
+                                      """, (time.time(), document_uri))
+            else:
+                with self.db_lock:
+                    self.curr.execute("""
+                    INSERT INTO files(last_changed_at, uri) VALUES (?, ?)
+                                      """, (time.time(), document_uri))
+        except Exception as e:
+            if os.getenv("AI_DIAGNOS_LOG") is not None:
+                logging.error(f"register file write encoutered the following error: {e}")
+            raise Exception(f"register file write encoutered the following exeption: {e}") from e
 
 
     def save_new_diagnostic(self, diagnostics: GeneralDiagnosticsPydanticObjekt, document_uri: str, analysis_type: str) -> bool:
@@ -151,39 +156,51 @@ class DiagnosticsHandlingSubsystemClass:
         
     
     def TTLBasedDeletionThread(self):
-        with self.db_lock:
-            last_writes_list = self.curr.execute("""
-            SELECT last_changed_at, uri FROM files
-                              """).fetchall()
-        for i in last_writes_list:
-            if time.time() - i[0] > self.ttl_seconds_until_deletion:
+        while True:
+            try:
                 with self.db_lock:
-                    self.curr.execute("""
-                    DELETE FROM files WHERE uri = ?
-                                      """, (i[1],))
-                    self.curr.execute("""
-                    DELETE FROM diagnostics WHERE uri = ?
-                                      """, (i[1],))
-        time.sleep(60)
+                    last_writes_list = self.curr.execute("""
+                    SELECT last_changed_at, uri FROM files
+                                      """).fetchall()
+                for i in last_writes_list:
+                    if time.time() - i[0] > self.ttl_seconds_until_deletion:
+                        if os.getenv("AI_DIAGNOS_LOG") is not None:
+                            logging.info("file: {i[1]}, last_changed_at: {i[0]}")
+                        with self.db_lock:
+                            self.curr.execute("""
+                            DELETE FROM files WHERE uri = ?
+                                              """, (i[1],))
+                            self.curr.execute("""
+                            DELETE FROM diagnostics WHERE uri = ?
+                                              """, (i[1],))
+                time.sleep(60)
+            except Exception as e:
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.error(f"TTLBasedDeletionThread encoutered the following problem : {e}")
 
     def TTLBasedDiagnosticsInvalidationThread(self):
-        with self.db_lock:
-            all_diagnostics = self.curr.execute("""
-            SELECT uri, created_at, diagnostics FROM diagnostics
-                                          """).fetchall()
-
-        for i in all_diagnostics:
-            with self.db_lock:
-                file_change_time = self.curr.execute("""
-                SELECT last_changed_at FROM files WHERE uri = ?
-                                         """, (i[0],)).fetchone()
-            if i[1] - file_change_time[0] > self.ttl_seconds_until_invalidation:
+        while True:
+            try:
                 with self.db_lock:
-                    self.curr.execute("""
-                    DELETE FROM diagnostics WHERE diagnostics = ?
-                                      """, (i[2],))
-                
-        time.sleep(2)
+                    all_diagnostics = self.curr.execute("""
+                    SELECT uri, created_at, diagnostics FROM diagnostics
+                                                  """).fetchall()
+
+                for i in all_diagnostics:
+                    with self.db_lock:
+                        file_change_time = self.curr.execute("""
+                        SELECT last_changed_at FROM files WHERE uri = ?
+                                                 """, (i[0],)).fetchone()
+                    if i[1] - file_change_time[0] > self.ttl_seconds_until_invalidation:
+                        with self.db_lock:
+                            self.curr.execute("""
+                            DELETE FROM diagnostics WHERE diagnostics = ?
+                                              """, (i[2],))
+                        
+                time.sleep(2)
+            except Exception as e:
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.error(f"TTLBasedDiagnosticsInvalidationThread encoutered the follwoign error: {e}")
 
 def DiagnosticsHandlingSubsystemFactory(ls: AIDiagnosLSP,
                                         sqlite_db_name: str = "diagnostics.db",
