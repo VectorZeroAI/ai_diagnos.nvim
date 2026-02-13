@@ -28,9 +28,8 @@ def main():
     def did_open(ls: AIDiagnosLSP, params: types.DidOpenTextDocumentParams):
         """ Try co load saved diagnostics forthe file, if fails, analyse.  """
         doc = ls.workspace.get_text_document(params.text_document.uri)
-        try:
-            ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(doc.uri)
-        except Exception:
+
+        if not ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(doc.uri):
             ls.BasicDiagnose(doc)
 
     @server.feature(types.TEXT_DOCUMENT_DID_SAVE)

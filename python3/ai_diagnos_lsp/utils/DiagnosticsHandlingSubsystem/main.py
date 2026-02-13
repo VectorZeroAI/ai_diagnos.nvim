@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 import sqlite3
-import threading
 from typing import Tuple, TYPE_CHECKING
-from lsprotocol import types
 import time
 import logging
 import os
 
+from lsprotocol import types
+
 from ai_diagnos_lsp.analysers.chains.GeneralDiagnosticsPydanticOutputParser import GeneralDiagnosticsPydanticObjekt
-from ai_diagnos_lsp.utils.grep import grep
 
 if TYPE_CHECKING:
-    from ai_diagnos_lsp.main import AI_diagnos_lsp
+    from ai_diagnos_lsp.AIDiagnosLSPClass import AIDiagnosLSP
 
 from ai_diagnos_lsp.utils.DiagnosticsHandlingSubsystem.Converters.GeneralDiagnosticsPydanticToLSProtocol import GeneralDiagnosticsPydanticToLSProtocol
 
@@ -24,7 +23,7 @@ class DiagnosticsHandlingSubsystemClass:
     
     Will propably get its own directory once actually implemented. 
     """
-    def __init__(self, ls: AI_Diagnos_lsp, sqlite_db_name: str = "diagnostics.db", ttl_seconds: int = 2592000) -> None:
+    def __init__(self, ls: AIDiagnosLSP, sqlite_db_name: str = "diagnostics.db", ttl_seconds: int = 2592000) -> None:
         self.ls = ls
         self.ttl_seconds = ttl_seconds
 
@@ -71,6 +70,9 @@ class DiagnosticsHandlingSubsystemClass:
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.error(f"Couldnt register new diagnosic due to following error: {e}")
+            return False
+        else:
+            return True
 
 
     def publish_diagnostics_for_file(self, document_uri: str) -> bool:
@@ -108,10 +110,11 @@ class DiagnosticsHandlingSubsystemClass:
         try:
             with self.ls.diagnostics_lock:
                 self.ls.diagnostics[document_uri] = (document.version, diagnostics_lsprotocol_final_list)
-            self.ls.text_document_diagnostic_refresh(None)
+            self.ls.workspace_diagnostic_refresh(None).result()
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.error(f"Couldnt publish diagnostics due to the following reason: {e}")
+            self.ls.window_show_message(types.ShowMessageParams(types.MessageType(1), f"Couldnt publish diagnostics for the following reason : {e}"))
             return False
 
         return True
@@ -120,7 +123,7 @@ class DiagnosticsHandlingSubsystemClass:
     def TTLBasedPruningThread(self):
         raise NotImplementedError()
 
-def DiagnosticsHandlingSubsystemFactory(ls: AI_diagnos_lsp,
+def DiagnosticsHandlingSubsystemFactory(ls: AIDiagnosLSP,
                                         sqlite_db_name: str = "diagnostics.db",
                                         ttl_seconds: int = 2592000
                                         ) -> DiagnosticsHandlingSubsystemClass:

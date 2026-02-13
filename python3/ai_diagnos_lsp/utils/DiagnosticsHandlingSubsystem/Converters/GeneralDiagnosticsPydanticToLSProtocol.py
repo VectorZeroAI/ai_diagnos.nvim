@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+from __future__ import annotations
 from typing import List, Tuple, TYPE_CHECKING
 import logging
 import os
