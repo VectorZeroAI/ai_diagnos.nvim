@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from typing import List, Tuple, Union
 
-class DiagnosticsPydanticObjekt(BaseModel):
+class GeneralDiagnosticsPydanticObjekt(BaseModel):
     """This is the full diagnostics class. It is basically the root for JSON"""
     class SingleDiagnostic(BaseModel):
         """
@@ -28,6 +28,6 @@ def GeneralDiagnosticsOutputParserFactory() -> PydanticOutputParser:
     For consistansy of the codebases style ? 
     """
 
-    return PydanticOutputParser(pydantic_object=DiagnosticsPydanticObjekt)
+    return PydanticOutputParser(pydantic_object=GeneralDiagnosticsPydanticObjekt)
 
 

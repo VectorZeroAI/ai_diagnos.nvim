@@ -25,9 +25,11 @@ class DiagnosticsHandlingSubsystemClass:
     Will propably get its own directory once actually implemented. 
     """
     def __init__(self, ls: AI_Diagnos_lsp, sqlite_db_name: str = "diagnostics.db", ttl_seconds: int = 2592000) -> None:
+        self.ls = ls
+        self.ttl_seconds = ttl_seconds
+
         self.conn = sqlite3.connect(sqlite_db_name, autocommit=True)
         self.curr = self.conn.cursor()
-        self.ls = ls
         self.curr.execute("""
         CREATE TABLE IF NOT EXISTS files(
             uri TEXT PRIMARY KEY,

@@ -16,3 +16,4 @@ ai_diagnos_lsp.log
 python3/AI_LSP.egg-info/entry_points.txt
 python3/AI_LSP.egg-info/top_level.txt
 python3/ai_diagnos_lsp/analysers/chains/LLM/__pycache__/BasicGroqLLM.cpython-312.pyc
+python3/ai_diagnos_lsp/__pycache__/AIDiagnosLSPClass.cpython-312.pyc

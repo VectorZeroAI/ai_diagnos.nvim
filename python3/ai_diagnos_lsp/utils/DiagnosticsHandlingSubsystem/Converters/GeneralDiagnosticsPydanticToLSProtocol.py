@@ -1,11 +1,10 @@
-from typing import List, Tuple, TYPE_CHECKING
+from typing import List, Tuple
 import logging
 import os
 from pygls.workspace import TextDocument
 from lsprotocol import types
 
-if TYPE_CHECKING:
-    from ai_diagnos_lsp.main import AI_diagnos_lsp
+from ai_diagnos_lsp.AIDiagnosLSPClass import AIDiagnosLSP
 
 from ai_diagnos_lsp.analysers.chains.GeneralDiagnosticsPydanticOutputParser import GeneralDiagnosticsPydanticObjekt
 from ai_diagnos_lsp.utils.grep import grep
@@ -18,7 +17,7 @@ severity_map = {
         }
 
 
-def GeneralDiagnosticsPydanticToLSProtocol(ls: AI_diagnos_lsp,
+def GeneralDiagnosticsPydanticToLSProtocol(ls: AIDiagnosLSP,
                                            pydantic_objekts_list: List[GeneralDiagnosticsPydanticObjekt],
                                            document: TextDocument
                                            ) -> List[types.Diagnostic]:

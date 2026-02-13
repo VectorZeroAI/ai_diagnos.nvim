@@ -12,7 +12,9 @@ from ai_diagnos_lsp.analysers.chains.BasicChainOpenrouter import BasicChainOpenr
 
 from ai_diagnos_lsp.utils.grep import grep
 
-def BasicDiagnoseFunctionWorker(document: TextDocument, ls):
+from ai_diagnos_lsp.AIDiagnosLSPClass import AIDiagnosLSP
+
+def BasicDiagnoseFunctionWorker(document: TextDocument, ls: AIDiagnosLSP):
     """
     The Analyser and diagnostics provider thread . 
     """
