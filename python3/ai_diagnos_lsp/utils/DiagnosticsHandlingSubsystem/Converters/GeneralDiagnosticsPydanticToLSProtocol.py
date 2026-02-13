@@ -1,10 +1,11 @@
-from typing import List, Tuple
+from typing import List, Tuple, TYPE_CHECKING
 import logging
 import os
 from pygls.workspace import TextDocument
 from lsprotocol import types
 
-from ai_diagnos_lsp.AIDiagnosLSPClass import AIDiagnosLSP
+if TYPE_CHECKING:
+    from ai_diagnos_lsp.AIDiagnosLSPClass import AIDiagnosLSP
 
 from ai_diagnos_lsp.analysers.chains.GeneralDiagnosticsPydanticOutputParser import GeneralDiagnosticsPydanticObjekt
 from ai_diagnos_lsp.utils.grep import grep
