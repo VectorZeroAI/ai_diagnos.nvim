@@ -10,7 +10,7 @@ def main():
     """
     The server setup function. 
     """
-    server = AIDiagnosLSP('ai_diagnos', "v0.8.2 DEV")
+    server = AIDiagnosLSP('ai_diagnos', "v0.8.3 DEV")
     
     @server.feature(types.INITIALIZE)
     def on_startup(ls: AIDiagnosLSP, params: types.InitializeParams):
@@ -99,8 +99,8 @@ def main():
         try:
             assert params[0] is not None
             doc = ls.workspace.get_text_document(params[0])
-        except Exception:
-            ls.window_show_message(types.ShowMessageParams(types.MessageType(1), "Couldnt get the URI parameter due to the following error {e}"))
+        except Exception as e:
+            ls.window_show_message(types.ShowMessageParams(types.MessageType(1), f"Couldnt get the URI parameter due to the following error {e}"))
             return
         else:
             ls.BasicDiagnose(doc)
@@ -109,14 +109,14 @@ def main():
     @server.command("Clear.AIDiagnostics")
     def ClearAIDiagnostics(ls: AIDiagnosLSP, params: Sequence[Any | None]):
         """ Clears AI diagnostics for the provided URI """
-        ls.diagnostics[params[0]] = {}
+        ls.diagnostics[params[0]] = (None, None)
         ls.window_show_message(types.ShowMessageParams(types.MessageType(3), "successfully cleared the diagnostics"))
 
     @server.command("Clear.AIDiagnostics.All")
     def ClearAllAIDiagnostics(ls: AIDiagnosLSP, params: Sequence[Any | None]):
         """ Clears ALL the AI diagnostics """
         for i in ls.diagnostics:
-            ls.diagnostics[i] = {}
+            ls.diagnostics[i] = (None, None)
         ls.window_show_message(types.ShowMessageParams(types.MessageType(3), "succesfully cleared the diagnostics"))
 
     server.start_io()

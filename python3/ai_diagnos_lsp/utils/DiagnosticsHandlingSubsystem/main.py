@@ -75,7 +75,9 @@ class DiagnosticsHandlingSubsystemClass:
                 logging.error(f"Couldnt register new diagnosic due to following error: {e}")
             return False
         else:
-            self.ls.workspace_diagnostic_refresh(None).result()
+            self.ls.workspace_diagnostic_refresh(None)
+            if os.getenv("AI_DIAGNOS_LOG") is not None:
+                logging.info("sucsessfully registered new diagnostics")
             return True
 
 
@@ -88,6 +90,11 @@ class DiagnosticsHandlingSubsystemClass:
             json_diagnostics_list = self.curr.execute("""
             SELECT diagnostics FROM diagnostics WHERE uri = ?
                               """, (document_uri,)).fetchall()
+
+            if not len(json_diagnostics_list):
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.warning(f"No diagnostics for the file found . File : {document_uri}")
+                return False
             
             pydantic_objekts_list = []
             for i in json_diagnostics_list:
@@ -115,13 +122,15 @@ class DiagnosticsHandlingSubsystemClass:
         try:
             with self.ls.diagnostics_lock:
                 self.ls.diagnostics[document_uri] = (document.version, diagnostics_lsprotocol_final_list)
-            self.ls.workspace_diagnostic_refresh(None).result()
+            self.ls.workspace_diagnostic_refresh(None)
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.error(f"Couldnt publish diagnostics due to the following reason: {e}")
             self.ls.window_show_message(types.ShowMessageParams(types.MessageType(1), f"Couldnt publish diagnostics for the following reason : {e}"))
             return False
 
+        if os.getenv("AI_DIAGNOS_LOG") is not None:
+            logging.info("Sucsessfully published diagnostics. ")
         return True
         
     

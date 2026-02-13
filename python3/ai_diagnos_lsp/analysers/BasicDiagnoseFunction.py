@@ -155,6 +155,7 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls: AIDiagnosLSP):
                                                                     document_uri=document.uri,
                                                                     analysis_type="Basic"
                                                                 )
+            ls.DiagnosticsHandlingSubsystem.publish_diagnostics_for_file(document.uri)
 
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
