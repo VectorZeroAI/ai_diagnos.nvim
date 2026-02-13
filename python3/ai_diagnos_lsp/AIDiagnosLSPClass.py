@@ -9,6 +9,7 @@ from lsprotocol import types
 import time
 
 from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunctionWorker
+from ai_diagnos_lsp.utils.DiagnosticsHandlingSubsystem.main import DiagnosticsHandlingSubsystemFactory
 
 class AIDiagnosLSP(LanguageServer):
     """
@@ -21,6 +22,7 @@ class AIDiagnosLSP(LanguageServer):
         self.last_diagnostic_time = {}
         self.config = {}
         self.diagnostics_lock = threading.Lock()
+        self.DiagnosticsHandlingSubsystem = DiagnosticsHandlingSubsystemFactory(self)
 
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.basicConfig(

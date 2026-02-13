@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import time
-from typing import Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from lsprotocol import types
 from pygls.workspace import TextDocument
 import logging
@@ -11,8 +11,6 @@ import threading
 from ai_diagnos_lsp.analysers.chains.BasicChainGemini import BasicChainGeminiFactory
 from ai_diagnos_lsp.analysers.chains.BasicChainOmniprovider import BasicChainOmniproviderFactory
 from ai_diagnos_lsp.analysers.chains.BasicChainOpenrouter import BasicChainOpenrouterFactory
-
-from ai_diagnos_lsp.utils.grep import grep
 
 if TYPE_CHECKING:
     from ai_diagnos_lsp.AIDiagnosLSPClass import AIDiagnosLSP
@@ -25,15 +23,6 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls: AIDiagnosLSP):
     try:
 
         # ---- The section that sets up the variables.  -----
-
-        diagnostics = []
-
-        severity_map = {
-                1: types.DiagnosticSeverity.Error,
-                2: types.DiagnosticSeverity.Warning,
-                3: types.DiagnosticSeverity.Information,
-                4: types.DiagnosticSeverity.Hint
-                }
 
         debounce_ms = ls.config["debounce_ms"]
 
@@ -161,80 +150,21 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls: AIDiagnosLSP):
         if langchain_failed.is_set():
             ls.window_show_message(types.ShowMessageParams(types.MessageType(1), "Langchain FAILED"))
             return
+        try:
+            ls.DiagnosticsHandlingSubsystem.register_new_diagnostic(diagnostics=tmp,
+                                                                    document_uri=document.uri,
+                                                                    analysis_type="Basic"
+                                                                )
 
-
-
-
-        # --------- The diagnostics handling section -----------
-
-
-
-        for i in tmp.diagnostics:
-            try:
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info("searching the file with grep. ")
-                    logging.info(f"searching for : {i.location} ; in {document.uri}")
-                
-                if isinstance(i.location, Tuple):
-                    pos = grep(i.location[0], document.source)[i.location[1] - 1]
-                else:
-                    pos = grep(i.location, document.source)[0]
-                pos_line = pos[0]
-                pos_char = pos[1]
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info(f"found {i.location} at line : {pos_line}, char : {pos_char}")
-            except IndexError as e:
-                # Ignore the diagnostic entirely, because if no matches were found, it means that the AI
-                # halucinated, wich makes this one specific diagnostic is wrong, wich is not worth the hassle
-                # to try to use. So it is skipped. This is by design, not an error. 
-
-                if os.getenv("AI_DIAGNOS_LOG") is not None:
-                    logging.info(f"Errored out. Most likely a halucinated citation. The error : {e}")
-                continue 
-
+        except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.info(f"DIAGNOSTIC : error message:  {i.error_message} ; severity level : {i.severity_level} ; pos line : {pos_line} ; pos char :  {pos_char}")
-
-            severity_level_converted = severity_map.get(i.severity_level)
-
-            diagnostics.append(
-                    types.Diagnostic(
-                        message=i.error_message,
-                        severity=severity_level_converted,
-                        range=types.Range(
-                            start=types.Position(pos_line, pos_char),
-                            end=types.Position(pos_line, pos_char)
-                            ), 
-                        source="AI diagnos LSP", data="AI",code="AI",
-                        code_description=types.CodeDescription(" This is AI generated Diagnostics. I am putting this wherever I can because why not ?  ")
-                        )
-                    )
-
-
-
-        # -------- The diagnostics publishing section ------------
-        # Also the last section of the thread. 
-
-
-
-
-        _, previous = ls.diagnostics.get(document.uri, (0, []))
-        
-        if previous != diagnostics:
+                logging.error("Couldnt register diagnostics into Diagnostics handling subsystem")
+            ls.window_show_message(types.ShowMessageParams(types.MessageType(1), f"Couldnt register diagnostics due to the following reason: {e}"))
+            return
+        else:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.info("publishing diagnostics I guess....")
-
-            with ls.diagnostics_lock:
-                ls.diagnostics[document.uri] = (document.version, diagnostics)
-
-            if os.getenv("AI_DIAGNOS_LOG") is not None:
-                logging.info(f"published the following diagnostics {diagnostics} for document {document.uri}")
-
-            ls.workspace_diagnostic_refresh(None).result()
-
-            return logging.info("Worker thread ending")
-
-        return logging.warning("Worker thread ending without publishing diagnostics")
+                logging.info("sucsessfully registered the diagnostics into the Diagnostics handling subsystem")
+            return
 
     
     except Exception as e:
