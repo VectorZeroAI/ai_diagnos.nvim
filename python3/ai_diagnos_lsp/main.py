@@ -24,6 +24,10 @@ class AI_diagnos_lsp(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.diagnostics = {}
+        self.last_diagnostic_time = {}
+        self.config = {}
+        self.diagnostics_lock = threading.Lock()
+
         if os.getenv("AI_DIAGNOS_LOG") is not None:
             logging.basicConfig(
                     filename="ai_diagnos_lsp.log",
@@ -31,9 +35,6 @@ class AI_diagnos_lsp(LanguageServer):
                     format='%(asctime)s [%(levelname)s] %(message)s',
                     datefmt='%H:%M:%S'
                     )
-        self.last_diagnostic_time = {}
-        self.config = {}
-        self.diagnostics_lock = threading.Lock()
 
     def BasicDiagnose(self, doc: TextDocument):
         """
