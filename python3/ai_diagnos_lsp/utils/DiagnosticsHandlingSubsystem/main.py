@@ -252,6 +252,7 @@ class DiagnosticsHandlingSubsystemClass:
                             curr.execute("""
                             DELETE FROM files WHERE uri = ?
                                               """, (i[1],))
+                        self.load_diagnostics_for_file(i[1])
                 time.sleep(60)
             except Exception as e:
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
@@ -290,6 +291,7 @@ class DiagnosticsHandlingSubsystemClass:
                             curr.execute(f"""
                             DELETE FROM diagnostics_{i[3]} WHERE diagnostics = ?
                                               """, (i[2],))
+                        self.load_diagnostics_for_file(i[0])
                         
                 time.sleep(2)
             except Exception as e:
