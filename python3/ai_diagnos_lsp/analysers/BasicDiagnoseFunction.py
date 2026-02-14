@@ -150,6 +150,14 @@ def BasicDiagnoseFunctionWorker(document: TextDocument, ls: AIDiagnosLSP):
         if langchain_failed.is_set():
             ls.window_show_message(types.ShowMessageParams(types.MessageType(1), "Langchain FAILED"))
             return
+
+
+
+        # ----- registering the diagnostics to the diagnostics handling subsystem ---------
+
+
+
+
         try:
             ls.DiagnosticsHandlingSubsystem.save_new_diagnostic(diagnostics=tmp,
                                                                     document_uri=document.uri,
