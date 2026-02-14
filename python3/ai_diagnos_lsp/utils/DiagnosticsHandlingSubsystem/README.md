@@ -38,11 +38,13 @@ flowchart TB
         conn[("SQLite Connection<br/>(diagnostics.db)")]
         ttl_del["TTLBasedDeletionThread<br/>(runs every 360s)"]
         ttl_inv["TTLBasedDiagnosticsInvalidationThread<br/>(runs every 2s)"]
+        ls["language server objekt"]
 
         DHS_obj --> DB_lock
         DHS_obj --> conn
         DHS_obj --> ttl_del
         DHS_obj --> ttl_inv
+        DHS_obj --> ls
 
         subgraph methods["Callable Methods"]
             direction TB
@@ -50,14 +52,24 @@ flowchart TB
             save_new_diagnostic["save_new_diagnostic"]
             load_all_diagnostics["load_all_diagnostics"]
             load_diagnostics_for_file["load_diagnostics_for_file"]
+
+            register_file_write -- writes to --> files_colum_last_changed_at
+            register_file_write -- writes to --> files_colum_uri
         end
         DHS_obj ---> methods
     end
 
     subgraph Database["SQLite Schema"]
         direction LR
-        files["files<br/>(uri, last_changed_at)"]
-        diag_basic["diagnostics_Basic<br/>(uri, diagnostics, created_at)"]
+        subgraph files["files"]
+            files_colum_uri["collum: uri"]
+            files_colum_last_changed_at["collum: last_changed_at"]
+        end
+        subgraph diag_basic["diagnostics_Basic"]
+            diag_basic_uri["collum: uri"]
+            diag_basic_diagnostics["collum: diagnostics"]
+            diag_basic_created_at["colum: created_at"]
+        end
         diag_cross["diagnostics_CrossFile<br/>(...)"]
         diag_logic["diagnostics_Logic<br/>(...)"]
         diag_style["diagnostics_Style<br/>(...)"]
@@ -76,33 +88,32 @@ flowchart TB
 
     subgraph Conversion["Diagnostic Conversion"]
         func["GeneralDiagnosticsPydanticToLSProtocol()"]
-        grep["grep() utility<br/>(text search)"]
-        severity["severity_map"]
-        func --> grep
-        func --> severity
+        note_1["Will be expanded later"]
     end
 
-    subgraph External["External World"]
-        Client[("LSP Client")]
-        FileSystem[("File System")]
-        AIAnalysis[("AI Analysis Module")]
+    subgraph external["External world"]
+        LSP["Language server"]
+        LSP <-- is a shared object --> ls
+        callers["External callers"]
+        Client["The editor"] 
     end
 
     %% Interactions
-    AIAnalysis -- "calls save_new_diagnostic()" --> DHS
-    FileSystem -- "file save triggers<br/>register_file_write()" --> DHS
 
-    DHS -- "reads/writes" --> Database
-    DHS -- "uses" --> Conversion
+    callers -- "calls" --> methods
 
-    DHS -- "publishes diagnostics via<br/>workspace/diagnostic/refresh" --> Client
+    methods -- "read/write" --> Database
+    methods -- "use" --> Conversion
+
+    load_all_diagnostics -- "publishes diagnostics via<br/>workspace/diagnostic/refresh" --> Client
+    load_diagnostics_for_file -- "publishes diagnostics via<br/>workspace/diagnostic/refresh" --> Client
 
     ttl_del -- "deletes old file records<br/>based on last_changed_at" --> Database
     ttl_inv -- "deletes stale diagnostics<br/>(last_change - created_at > ttl_invalidation)" --> Database
 
     load_diagnostics["load_all_diagnostics() / load_diagnostics_for_file()"] --> Conversion
     Conversion -- "produces types.Diagnostic[]" --> LS
-    LS --> Client
+    LSP --> Client
 ```
 
 
