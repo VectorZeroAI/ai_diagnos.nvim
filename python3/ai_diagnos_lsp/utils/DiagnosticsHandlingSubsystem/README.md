@@ -77,17 +77,23 @@ flowchart TB
         diag_deep["diagnostics_Deep<br/>(...)"]
         view["all_diagnostics_view<br/>(UNION of all diagnostic tables)"]
 
-        files --> view
         diag_basic --> view
         diag_cross --> view
         diag_logic --> view
         diag_style --> view
         diag_security --> view
         diag_deep --> view
+
+        diag_basic -- "Foreign key uri referenses to" --> files
+        diag_cross -- "Foreign key uri referenses to" --> files
+        diag_logic -- "Foreign key uri referenses to" --> files
+        diag_style -- "Foreign key uri referenses to" --> files
+        diag_security -- "Foreign key uri referenses to" --> files
+        diag_deep -- "Foreign key uri referenses to" --> files
     end
 
     subgraph Conversion["Diagnostic Conversion"]
-        func["GeneralDiagnosticsPydanticToLSProtocol()"]
+        func1["GeneralDiagnosticsPydanticToLSProtocol()"]
         note_1["Will be expanded later"]
     end
 
@@ -102,14 +108,22 @@ flowchart TB
 
     callers -- "calls" --> methods
 
-    methods -- "read/write" --> Database
-    methods -- "use" --> Conversion
+    load_all_diagnostics -- "use" --> func1
+    load_diagnostics_for_file -- "use" --> func1
 
-    load_all_diagnostics -- "publishes diagnostics via<br/>workspace/diagnostic/refresh" --> Client
-    load_diagnostics_for_file -- "publishes diagnostics via<br/>workspace/diagnostic/refresh" --> Client
+    load_all_diagnostics -- "Gives the diagnostics to" --> ls
+    load_diagnostics_for_file -- "Gives the diagnostics to" --> ls
+    ls -- "publishes diagnostics via<br/>workspace/diagnostic/refresh" --> Client
+    ls -- "publishes diagnostics via<br/>workspace/diagnostic/refresh" --> Client
 
-    ttl_del -- "deletes old file records<br/>based on last_changed_at" --> Database
-    ttl_inv -- "deletes stale diagnostics<br/>(last_change - created_at > ttl_invalidation)" --> Database
+    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_basic
+    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_cross
+    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_logic
+    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_style
+    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_security
+    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_deep
+
+    ttl_del -- "deletes stale diagnostics<br/>(last_change - created_at > ttl_invalidation)" --> files
 
     load_diagnostics["load_all_diagnostics() / load_diagnostics_for_file()"] --> Conversion
     Conversion -- "produces types.Diagnostic[]" --> LS
