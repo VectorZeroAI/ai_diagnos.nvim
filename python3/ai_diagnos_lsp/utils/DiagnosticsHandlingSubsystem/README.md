@@ -44,8 +44,12 @@ flowchart TB
         DHS_obj --> ttl_del
         DHS_obj --> ttl_inv
 
-        methods["Methods:<br/>• register_file_write()<br/>• save_new_diagnostic()<br/>• load_all_diagnostics()<br/>• load_diagnostics_for_file()"]
-        DHS_obj --- methods
+        subgraph methods["Callable Methods"]
+            register_file_write()["register_file_write"]
+            save_new_diagnostic()["save_new_diagnostic"]
+            load_all_diagnostics()["load_all_diagnostics"]
+            load_diagnostics_for_file()["load_diagnostics_for_file"]
+        DHS_obj ---> methods
     end
 
     subgraph Database["SQLite Schema"]
