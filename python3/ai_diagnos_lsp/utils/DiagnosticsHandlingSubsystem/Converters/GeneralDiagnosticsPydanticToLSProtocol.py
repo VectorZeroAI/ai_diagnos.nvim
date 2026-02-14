@@ -23,7 +23,7 @@ severity_map = {
 
 def GeneralDiagnosticsPydanticToLSProtocol(ls: AIDiagnosLSP,
                                            pydantic_objekts_list: List[GeneralDiagnosticsPydanticObjekt],
-                                           document: TextDocument
+                                           document: TextDocument | str
                                            ) -> List[types.Diagnostic]:
     """
 
@@ -36,12 +36,21 @@ def GeneralDiagnosticsPydanticToLSProtocol(ls: AIDiagnosLSP,
             try:
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
                     logging.info("searching the file with grep.")
-                    logging.info(f"searching for : {j.location} ; in {document.uri}")
+                    if isinstance(document, TextDocument):
+                        logging.info(f"searching for : {j.location} ; in {document.uri}")
+                    else:
+                        logging.info(f"searching for : {j.location} ; in {document}")
                 
                 if isinstance(j.location, Tuple):
-                    pos = grep(j.location[0], document.source)[j.location[1] - 1]
+                    if isinstance(document, TextDocument):
+                        pos = grep(j.location[0], document.source)[j.location[1] - 1]
+                    else:
+                        pos = grep(j.location[0], document)[j.location[1] - 1]
                 else:
-                    pos = grep(j.location, document.source)[0]
+                    if isinstance(document, TextDocument):
+                        pos = grep(j.location, document.source)[0]
+                    else:
+                        pos = grep(j.location, document)[0]
                 pos_line = pos[0]
                 pos_char = pos[1]
                 if os.getenv("AI_DIAGNOS_LOG") is not None:

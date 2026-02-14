@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 import time
 import logging
 import os
+from pathlib import Path
+from urllib.parse import urlparse, unquote
 
 from lsprotocol import types
 
@@ -24,6 +26,9 @@ class DiagnosticsHandlingSubsystemClass:
     
     Will propably get its own directory once actually implemented. 
     """
+
+    SUPPORTED_DIAGNOSTIC_TYPES = ["Basic", "CrossFile", "Logic", "Style", "Security", "Deep"]
+
     def __init__(self,
                  ls: AIDiagnosLSP,
                  sqlite_db_name,
@@ -35,60 +40,87 @@ class DiagnosticsHandlingSubsystemClass:
         self.db_lock = threading.Lock()
         self.ttl_seconds_until_invalidation = ttl_seconds_until_invalidation
 
-        threading.Thread(target=self.TTLBasedDeletionThread, daemon=True, args=(self,)).start()
-        threading.Thread(target=self.TTLBasedDiagnosticsInvalidationThread, daemon=True, args=(self,)).start()
+        threading.Thread(target=self.TTLBasedDeletionThread, daemon=True).start()
+        threading.Thread(target=self.TTLBasedDiagnosticsInvalidationThread, daemon=True).start()
         
         self.conn = sqlite3.connect(sqlite_db_name, autocommit=True, check_same_thread=False)
-        self.curr = self.conn.cursor()
-        self.curr.execute("""
+        curr = self.conn.cursor()
+
+        # SQL DB initialisation
+
+        curr.execute("""
         CREATE TABLE IF NOT EXISTS files(
             uri TEXT PRIMARY KEY,
-            hash TEXT UNIQUE,
             last_changed_at REAL NOT NULL
             )
                           """)
+        # TODO: Add hash based renaming detection. 
 
-        # TODO: Add hashe based renaming detection. 
+        curr.executescript("""
+                           PRAGMA journal_mode=WAL;
+                           PRAGMA synchronous=NORMAL;
+                           PRAGMA cache_size=-64000;
+                           PRAGMA temp_store=MEMORY;
+                           PRAGMA mmap_size=268435456;
+                           PRAGMA foreign_keys=ON;
+                           """)
 
-        self.curr.execute("""
-        CREATE TABLE IF NOT EXISTS diagnostics(
-            uri TEXT NOT NULL,
-            diagnostics TEXT UNIQUE,
-            created_at REAL NOT NULL
-            )
-                          """)
+        for name in self.SUPPORTED_DIAGNOSTIC_TYPES:
+            curr.execute(f"""
+            CREATE TABLE IF NOT EXISTS diagnostics_{name}(
+                uri TEXT NOT NULL,
+                diagnostics TEXT UNIQUE NOT NULL,
+                created_at REAL NOT NULL,
+                FOREIGN KEY (uri) REFERENCES files ON DELETE CASCADE
+                )
+                              """, )
+        
+        VIEW_CREATION_SCRIPT = """
+        CREATE VIEW IF NOT EXISTS all_diagnostics_view AS \n
+        """
+        for name in self.SUPPORTED_DIAGNOSTIC_TYPES:
+            VIEW_CREATION_SCRIPT = VIEW_CREATION_SCRIPT + f"SELECT uri, '{name}' AS diagnostics_type, diagnostics, created_at FROM diagnostics_{name} \n \n"
+            if self.SUPPORTED_DIAGNOSTIC_TYPES.index(name) != len(self.SUPPORTED_DIAGNOSTIC_TYPES) - 1:
+                VIEW_CREATION_SCRIPT = VIEW_CREATION_SCRIPT + "UNION ALL \n"
+
+        curr.execute(VIEW_CREATION_SCRIPT)
+
+        curr.close()
 
     def register_file_write(self, document_uri: str):
+        curr = self.conn.cursor()
         try:
-            with self.db_lock:
-                tmp = self.curr.execute("""
-                SELECT uri FROM files WHERE uri = ?
-                                        """, (document_uri,)).fetchall()
+            tmp = curr.execute("""
+            SELECT uri FROM files WHERE uri = ?
+                                    """, (document_uri,)).fetchall()
 
             if len(tmp) > 0:
                 with self.db_lock:
-                    self.curr.execute("""
+                    curr.execute("""
                     UPDATE files SET last_changed_at = ? WHERE uri = ?
                                       """, (time.time(), document_uri))
             else:
                 with self.db_lock:
-                    self.curr.execute("""
+                    curr.execute("""
                     INSERT INTO files(last_changed_at, uri) VALUES (?, ?)
                                       """, (time.time(), document_uri))
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.error(f"register file write encoutered the following error: {e}")
             raise Exception(f"register file write encoutered the following exeption: {e}") from e
+        finally:
+            curr.close()
 
 
     def save_new_diagnostic(self, diagnostics: GeneralDiagnosticsPydanticObjekt, document_uri: str, analysis_type: str) -> bool:
         """
         Registers the diagnostic to the DataBase. DOES NOT PUBLISH THEM TO THE CLIENT
         """
+        curr = self.conn.cursor()
         try:
             with self.db_lock:
-                self.curr.execute("""
-                INSERT INTO diagnostics(uri, diagnostics, created_at) VALUES(?, ?, ?)
+                curr.execute(f"""
+                INSERT INTO diagnostics_{analysis_type}(uri, diagnostics, created_at) VALUES(?, ?, ?)
                                   """, (document_uri, diagnostics.model_dump_json(), time.time()))
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
@@ -99,6 +131,54 @@ class DiagnosticsHandlingSubsystemClass:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.info("sucsessfully registered new diagnostics")
             return True
+        finally:
+            curr.close()
+
+
+    def load_all_diagnostics(self):
+        """
+        Directly publishes all the diagnostics that it can find. 
+        """
+        curr = self.conn.cursor()
+        try:
+            all_diagnostics_for_every_file = curr.execute("""
+            SELECT diagnostics, uri FROM all_diagnostics_view
+                                                              """).fetchall()
+            
+            diagnostics_sorted_per_file = {}
+
+            for i in all_diagnostics_for_every_file:
+                current_uri = i[1]
+                diagnostics = i[0]
+                previous = diagnostics_sorted_per_file.get(current_uri)
+                if previous is None:
+                    previous = []
+                new_list = previous
+                new_list.append(diagnostics)
+                diagnostics_sorted_per_file[current_uri] = new_list
+
+            diagnostics_per_file = {}
+
+            for i in diagnostics_sorted_per_file.items():
+                pydantic_objekts_list = []
+                for j in i[1]:
+                    pydantic_objekts_list.append(GeneralDiagnosticsPydanticObjekt.model_validate_json(j))
+
+                diagnostics_per_file[i[0]] = pydantic_objekts_list
+
+            for i in diagnostics_per_file.items():
+                document = Path(unquote(urlparse(i[0]).path)).read_text()
+                converted_to_lsp_format = GeneralDiagnosticsPydanticToLSProtocol(self.ls, i[1], document)               
+                self.ls.diagnostics[i[0]] = converted_to_lsp_format
+
+        except Exception as e:
+            if os.getenv("AI_DIAGNOS_LOG") is not None:
+                logging.error(f"Couldnt load diagnostics due to following error : {e}")
+            return False
+        finally:
+            curr.close()
+                
+
 
 
     def load_diagnostics_for_file(self, document_uri: str) -> bool:
@@ -106,11 +186,11 @@ class DiagnosticsHandlingSubsystemClass:
         This function DIRECTLY PUBLISHES the diagnostics for a file. 
         MUST BE CALLED AFTER register_new_diagnostic.
         """
+        curr = self.conn.cursor()
         try:
-            with self.db_lock:
-                json_diagnostics_list = self.curr.execute("""
-                SELECT diagnostics FROM diagnostics WHERE uri = ?
-                                  """, (document_uri,)).fetchall()
+            json_diagnostics_list = curr.execute("""
+            SELECT diagnostics FROM all_diagnostics_view WHERE uri = ?
+                              """, (document_uri,)).fetchall()
 
             if not len(json_diagnostics_list):
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
@@ -126,6 +206,8 @@ class DiagnosticsHandlingSubsystemClass:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
                 logging.error(f"Couldnt load diagnostics due to following error : {e}")
             return False
+        finally:
+            curr.close()
 
         document = self.ls.workspace.get_text_document(document_uri)
 
@@ -156,22 +238,19 @@ class DiagnosticsHandlingSubsystemClass:
         
     
     def TTLBasedDeletionThread(self):
+        curr = self.conn.cursor()
         while True:
             try:
-                with self.db_lock:
-                    last_writes_list = self.curr.execute("""
-                    SELECT last_changed_at, uri FROM files
-                                      """).fetchall()
+                last_writes_list = curr.execute("""
+                SELECT last_changed_at, uri FROM files
+                                  """).fetchall()
                 for i in last_writes_list:
                     if time.time() - i[0] > self.ttl_seconds_until_deletion:
                         if os.getenv("AI_DIAGNOS_LOG") is not None:
-                            logging.info("file: {i[1]}, last_changed_at: {i[0]}")
+                            logging.info(f"file: {i[1]}, last_changed_at: {i[0]}")
                         with self.db_lock:
-                            self.curr.execute("""
+                            curr.execute("""
                             DELETE FROM files WHERE uri = ?
-                                              """, (i[1],))
-                            self.curr.execute("""
-                            DELETE FROM diagnostics WHERE uri = ?
                                               """, (i[1],))
                 time.sleep(60)
             except Exception as e:
@@ -186,27 +265,30 @@ class DiagnosticsHandlingSubsystemClass:
     and if the result is smaller then self.ttl_seconds_until_invalidation, 
     the diagnostic gets deleted from the DB. 
         """
+        curr = self.conn.cursor()
         while True:
             try:
-                with self.db_lock:
-                    all_diagnostics = self.curr.execute("""
-                    SELECT uri, created_at, diagnostics FROM diagnostics
-                                                  """).fetchall()
+                all_diagnostics = curr.execute("""
+                SELECT uri, created_at, diagnostics, diagnostics_type FROM all_diagnostics_view
+                                              """).fetchall()
 
                 for i in all_diagnostics:
-                    with self.db_lock:
-                        file_change_time = self.curr.execute("""
-                        SELECT last_changed_at FROM files WHERE uri = ?
-                                                 """, (i[0],)).fetchone()
+                    file_change_time = curr.execute("""
+                    SELECT last_changed_at FROM files WHERE uri = ?
+                                             """, (i[0],)).fetchone()
 
-                    if i[1] - file_change_time[0] < self.ttl_seconds_until_invalidation:
+                    if (file_change_time[0] - i[1]) > self.ttl_seconds_until_invalidation:
                     # This line means : 
-                    # if diagnostic_creation_timestamp - last change time, in unix epoch
-                    # Wich is a negative float, IS SMALLER THEN a positive integer self.ttl seconds until invalidation
-                    # Then invalidate (delete) that diagnostics entry. 
+                    # last_change_time - diagnostics creation time, wich results in 2 possibilities:
+                    # case 1:
+                    #     The result is negative, because diagnostics creation time is AFTER the last change time. 
+                    # case 2:
+                    #     The result is positive, because  diagnostics creation time is BEFORE the last change time. 
+                    # 
+                    # We want to delete diagnostics that were created before last write +self.ttl_seconds...
                         with self.db_lock:
-                            self.curr.execute("""
-                            DELETE FROM diagnostics WHERE diagnostics = ?
+                            curr.execute(f"""
+                            DELETE FROM diagnostics_{i[3]} WHERE diagnostics = ?
                                               """, (i[2],))
                         
                 time.sleep(2)
