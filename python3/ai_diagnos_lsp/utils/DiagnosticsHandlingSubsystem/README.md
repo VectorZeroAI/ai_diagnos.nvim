@@ -45,10 +45,12 @@ flowchart TB
         DHS_obj --> ttl_inv
 
         subgraph methods["Callable Methods"]
+            direction TB
             register_file_write()["register_file_write"]
             save_new_diagnostic()["save_new_diagnostic"]
             load_all_diagnostics()["load_all_diagnostics"]
             load_diagnostics_for_file()["load_diagnostics_for_file"]
+        end
         DHS_obj ---> methods
     end
 
