@@ -84,12 +84,19 @@ flowchart TB
         diag_security --> view
         diag_deep --> view
 
-        diag_basic -- "Foreign key uri referenses to" --> files
-        diag_cross -- "Foreign key uri referenses to" --> files
-        diag_logic -- "Foreign key uri referenses to" --> files
-        diag_style -- "Foreign key uri referenses to" --> files
-        diag_security -- "Foreign key uri referenses to" --> files
-        diag_deep -- "Foreign key uri referenses to" --> files
+        diag_basic -- "Foreign key uri referenses to" --> files_colum_uri
+        diag_cross -- "Foreign key uri referenses to" --> files_colum_uri
+        diag_logic -- "Foreign key uri referenses to" --> files_colum_uri
+        diag_style -- "Foreign key uri referenses to" --> files_colum_uri
+        diag_security -- "Foreign key uri referenses to" --> files_colum_uri
+        diag_deep -- "Foreign key uri referenses to" --> files_colum_uri
+
+        diag_basic <-- "Foreign key uri referenses to" -- files_colum_uri
+        diag_cross <-- "Foreign key uri referenses to" -- files_colum_uri
+        diag_logic <-- "Foreign key uri referenses to" -- files_colum_uri
+        diag_style <-- "Foreign key uri referenses to" -- files_colum_uri
+        diag_security <-- "Foreign key uri referenses to" -- files_colum_uri
+        diag_deep <-- "Foreign key uri referenses to" -- files_colum_uri
     end
 
     subgraph Conversion["Diagnostic Conversion"]
@@ -125,8 +132,6 @@ flowchart TB
 
     ttl_del -- "deletes stale diagnostics<br/>(last_change - created_at > ttl_invalidation)" --> files
 
-    load_diagnostics["load_all_diagnostics() / load_diagnostics_for_file()"] --> Conversion
-    Conversion -- "produces types.Diagnostic[]" --> LS
     LSP --> Client
 ```
 
