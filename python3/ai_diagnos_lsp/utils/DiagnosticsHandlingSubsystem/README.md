@@ -25,27 +25,11 @@ On construction of the class, it builds an SQLite DB for diagnostics storage.
 
 ## Operational Schema
 ```mermaid
-sequenceDiagram
-    participant User
-    participant LSP
-    participant Subsystem
-    participant DB
-    participant AI
-    
-    User->>LSP: Edit file
-    LSP->>Subsystem: register_file_write(uri)
-    Subsystem->>DB: UPDATE files SET last_changed_at
-
-    LSP->>AI: Analyze file
-    AI-->>LSP: Return diagnostics
-    LSP->>Subsystem: save_new_diagnostic()
-    Subsystem->>DB: INSERT INTO diagnostics_Basic
-    
-    LSP->>Subsystem: load_diagnostics_for_file()
-    Subsystem->>DB: SELECT FROM all_diagnostics_view
-    DB-->>Subsystem: Return JSON diagnostics
-    Subsystem-->>LSP: Return LSP Diagnostics
-    LSP->>User: Show squiggles
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
 ```
 
 
