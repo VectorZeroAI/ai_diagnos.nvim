@@ -91,12 +91,12 @@ flowchart TB
         diag_security -- "Foreign key uri referenses to" --> files_colum_uri
         diag_deep -- "Foreign key uri referenses to" --> files_colum_uri
 
-        diag_basic <-- "Foreign key uri referenses to" -- files_colum_uri
-        diag_cross <-- "Foreign key uri referenses to" -- files_colum_uri
-        diag_logic <-- "Foreign key uri referenses to" -- files_colum_uri
-        diag_style <-- "Foreign key uri referenses to" -- files_colum_uri
-        diag_security <-- "Foreign key uri referenses to" -- files_colum_uri
-        diag_deep <-- "Foreign key uri referenses to" -- files_colum_uri
+        files_colum_uri -- "On delete cascade" --> diag_basic
+        files_colum_uri -- "On delete cascade" --> diag_cross
+        files_colum_uri -- "On delete cascade" --> diag_logic
+        files_colum_uri -- "On delete cascade" --> diag_style
+        files_colum_uri -- "On delete cascade" --> diag_security
+        files_colum_uri -- "On delete cascade" --> diag_deep
     end
 
     subgraph Conversion["Diagnostic Conversion"]
