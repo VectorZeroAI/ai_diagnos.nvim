@@ -19,7 +19,7 @@ On construction of the class, it builds an SQLite DB for diagnostics storage.
 | ------------- | -------------- | -------------- | ------------- |
 | load_all_diagnostics | None | Loads and publishes all the diagnostics from the DB. Also tells the client to update the diagnostics | load_all_diagnostics(None) |
 | load_diagnostics_for_file | uri | Loads the diagnostics for a single file. Also tells the client to refresh diagnostics | load_diagnostics_for_file(doc.uri) |
-| save_new_diagnostics() | DiagnosticsPydanticObjekt ; Diagnostics Type | This method saves new diagnostics to the DB.  | save_new_diagnostics(New_Diagnostics_fresh_from_Langchain, "Deep") |
+| save_new_diagnostics() | DiagnosticsPydanticobject ; Diagnostics Type | This method saves new diagnostics to the DB.  | save_new_diagnostics(New_Diagnostics_fresh_from_Langchain, "Deep") |
 | register_new_write(uri) | uri | registeres a new write to the DB. | register_new_write(params.document.uri) |
 
 
@@ -38,7 +38,7 @@ flowchart TB
         conn[("SQLite Connection<br/>(diagnostics.db)")]
         ttl_del["TTLBasedDeletionThread<br/>(runs every 360s)"]
         ttl_inv["TTLBasedDiagnosticsInvalidationThread<br/>(runs every 2s)"]
-        ls["language server objekt"]
+        ls["language server object"]
 
         DHS_obj --> DB_lock
         DHS_obj --> conn
@@ -53,8 +53,8 @@ flowchart TB
             load_all_diagnostics["load_all_diagnostics"]
             load_diagnostics_for_file["load_diagnostics_for_file"]
 
-            register_file_write -- writes to --> files_colum_last_changed_at
-            register_file_write -- writes to --> files_colum_uri
+            register_file_write -- writes to --> files_column_last_changed_at
+            register_file_write -- writes to --> files_column_uri
         end
         DHS_obj ---> methods
     end
@@ -62,13 +62,13 @@ flowchart TB
     subgraph Database["SQLite Schema"]
         direction LR
         subgraph files["files"]
-            files_colum_uri["collum: uri"]
-            files_colum_last_changed_at["collum: last_changed_at"]
+            files_column_uri["column: uri"]
+            files_column_last_changed_at["column: last_changed_at"]
         end
         subgraph diag_basic["diagnostics_Basic"]
-            diag_basic_uri["collum: uri"]
-            diag_basic_diagnostics["collum: diagnostics"]
-            diag_basic_created_at["colum: created_at"]
+            diag_basic_uri["columnn: uri"]
+            diag_basic_diagnostics["columnn: diagnostics"]
+            diag_basic_created_at["column: created_at"]
         end
         diag_cross["diagnostics_CrossFile<br/>(...)"]
         diag_logic["diagnostics_Logic<br/>(...)"]
@@ -84,19 +84,19 @@ flowchart TB
         diag_security --> view
         diag_deep --> view
 
-        diag_basic -- "Foreign key uri referenses to" --> files_colum_uri
-        diag_cross -- "Foreign key uri referenses to" --> files_colum_uri
-        diag_logic -- "Foreign key uri referenses to" --> files_colum_uri
-        diag_style -- "Foreign key uri referenses to" --> files_colum_uri
-        diag_security -- "Foreign key uri referenses to" --> files_colum_uri
-        diag_deep -- "Foreign key uri referenses to" --> files_colum_uri
+        diag_basic -- "Foreign key uri referenses to" --> files_column_uri
+        diag_cross -- "Foreign key uri referenses to" --> files_column_uri
+        diag_logic -- "Foreign key uri referenses to" --> files_column_uri
+        diag_style -- "Foreign key uri referenses to" --> files_column_uri
+        diag_security -- "Foreign key uri referenses to" --> files_column_uri
+        diag_deep -- "Foreign key uri referenses to" --> files_column_uri
 
-        files_colum_uri -- "On delete cascade" --> diag_basic
-        files_colum_uri -- "On delete cascade" --> diag_cross
-        files_colum_uri -- "On delete cascade" --> diag_logic
-        files_colum_uri -- "On delete cascade" --> diag_style
-        files_colum_uri -- "On delete cascade" --> diag_security
-        files_colum_uri -- "On delete cascade" --> diag_deep
+        files_column_uri -- "On delete cascade" --> diag_basic
+        files_column_uri -- "On delete cascade" --> diag_cross
+        files_column_uri -- "On delete cascade" --> diag_logic
+        files_column_uri -- "On delete cascade" --> diag_style
+        files_column_uri -- "On delete cascade" --> diag_security
+        files_column_uri -- "On delete cascade" --> diag_deep
     end
 
     subgraph Conversion["Diagnostic Conversion"]
@@ -123,14 +123,14 @@ flowchart TB
     ls -- "publishes diagnostics via<br/>workspace/diagnostic/refresh" --> Client
     ls -- "publishes diagnostics via<br/>workspace/diagnostic/refresh" --> Client
 
-    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_basic
-    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_cross
-    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_logic
-    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_style
-    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_security
-    ttl_inv -- "deletes old file records<br/>based on last_changed_at" --> diag_deep
+    ttl_inv -- "deletes stale diagnostics<br/>(last_change - created_at > ttl_invalidation)" --> diag_basic
+    ttl_inv -- "deletes stale diagnostics<br/>(last_change - created_at > ttl_invalidation)" --> diag_cross
+    ttl_inv -- "deletes stale diagnostics<br/>(last_change - created_at > ttl_invalidation)" --> diag_logic
+    ttl_inv -- "deletes stale diagnostics<br/>(last_change - created_at > ttl_invalidation)" --> diag_style
+    ttl_inv -- "deletes stale diagnostics<br/>(last_change - created_at > ttl_invalidation)" --> diag_security
+    ttl_inv -- "deletes stale diagnostics<br/>(last_change - created_at > ttl_invalidation)" --> diag_deep
 
-    ttl_del -- "deletes stale diagnostics<br/>(last_change - created_at > ttl_invalidation)" --> files
+    ttl_del -- "Deletes records of old files based on a really long wait time. " --> files
 
     LSP --> Client
 ```
