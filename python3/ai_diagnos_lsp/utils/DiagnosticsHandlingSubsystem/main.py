@@ -102,7 +102,7 @@ class DiagnosticsHandlingSubsystemClass:
             else:
                 with self.db_lock:
                     curr.execute("""
-                    INSERT INTO files(last_changed_at, uri) VALUES (?, ?)
+                    INSERT INTO files(uri, last_changed_at) VALUES (?, ?)
                                       """, (time.time(), document_uri))
         except Exception as e:
             if os.getenv("AI_DIAGNOS_LOG") is not None:
@@ -252,8 +252,12 @@ class DiagnosticsHandlingSubsystemClass:
                             curr.execute("""
                             DELETE FROM files WHERE uri = ?
                                               """, (i[1],))
-                        self.load_diagnostics_for_file(i[1])
-                time.sleep(60)
+                        self.load_all_diagnostics()
+                        if os.getenv("AI_DIAGNOS_LOG") is not None:
+                            logging.info(f"Deleted all records for file {i[1]} because its last change time is {i[0]}")
+                time.sleep(360)
+                if os.getenv("AI_DIAGNOS_LOG") is not None:
+                    logging.info("Checked all the files")
             except Exception as e:
                 if os.getenv("AI_DIAGNOS_LOG") is not None:
                     logging.error(f"TTLBasedDeletionThread encoutered the following problem : {e}")
@@ -292,6 +296,11 @@ class DiagnosticsHandlingSubsystemClass:
                             DELETE FROM diagnostics_{i[3]} WHERE diagnostics = ?
                                               """, (i[2],))
                         self.load_diagnostics_for_file(i[0])
+                        if os.getenv("AI_DIAGNOS_LOG") is not None:
+                            logging.info(f"Deleted from {i[3]} diagnostics:{i[2]}, and called refesh on file: {i[0]}.")
+                    else:
+                        if os.getenv("AI_DIAGNOS_LOG") is not None:
+                            logging.info(f"Did not delete, because last_changed_at = {file_change_time[0]}, and diagnostics were created at {i[1]}, with self.ttl_seconds_until_invalidation being {self.ttl_seconds_until_invalidation}")
                         
                 time.sleep(2)
             except Exception as e:

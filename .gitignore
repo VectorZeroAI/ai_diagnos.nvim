@@ -20,3 +20,5 @@ python3/ai_diagnos_lsp/__pycache__/AIDiagnosLSPClass.cpython-312.pyc
 python3/ai_diagnos_lsp/utils/DiagnosticsHandlingSubsystem/Converters/__pycache__/GeneralDiagnosticsPydanticToLSProtocol.cpython-312.pyc
 python3/ai_diagnos_lsp/utils/DiagnosticsHandlingSubsystem/__pycache__/main.cpython-312.pyc
 diagnostics.db
+diagnostics.db-shm
+diagnostics.db-wal
