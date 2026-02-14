@@ -17,7 +17,7 @@ from ai_diagnos_lsp.analysers.chains.GeneralDiagnosticsPydanticOutputParser impo
 if TYPE_CHECKING:
     from ai_diagnos_lsp.AIDiagnosLSPClass import AIDiagnosLSP
 
-from ai_diagnos_lsp.utils.DiagnosticsHandlingSubsystem.Converters.GeneralDiagnosticsPydanticToLSProtocol import GeneralDiagnosticsPydanticToLSProtocol
+from ai_diagnos_lsp.DiagnosticsHandlingSubsystem.Converters.GeneralDiagnosticsPydanticToLSProtocol import GeneralDiagnosticsPydanticToLSProtocol
 
 class DiagnosticsHandlingSubsystemClass:
     """

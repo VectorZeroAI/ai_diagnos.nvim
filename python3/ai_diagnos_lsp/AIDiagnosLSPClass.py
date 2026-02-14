@@ -9,7 +9,7 @@ from lsprotocol import types
 import time
 
 from ai_diagnos_lsp.analysers.BasicDiagnoseFunction import BasicDiagnoseFunctionWorker
-from ai_diagnos_lsp.utils.DiagnosticsHandlingSubsystem.main import DiagnosticsHandlingSubsystemFactory
+from ai_diagnos_lsp.DiagnosticsHandlingSubsystem.main import DiagnosticsHandlingSubsystemFactory
 
 class AIDiagnosLSP(LanguageServer):
     """
