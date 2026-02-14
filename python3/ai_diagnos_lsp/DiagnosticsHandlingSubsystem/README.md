@@ -46,6 +46,7 @@ flowchart TB
         DHS_obj --> ttl_inv
         DHS_obj --> ls
 
+        ls <-- "Shared object" --> LS
         subgraph methods["Callable Methods"]
             direction TB
             register_file_write["register_file_write"]
@@ -137,3 +138,9 @@ flowchart TB
 
 
 ## SQL Schema
+
+| table name | colums list | use case |
+| ----| ---- | ---- |
+| files | uri ; last_changed_at | for tracking file writes |
+
+
