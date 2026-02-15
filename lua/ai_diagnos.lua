@@ -107,61 +107,71 @@ local default_config = {
 -- Setup function called by users in their config
 ---@param user_config user_config
 function M.setup(user_config)
-    local configs = require('lspconfig.configs')
-    if user_config.use_gemini == true or user_config.use_omniprovider == true then
-        if user_config.api_key_gemini == nil then
-            error("For your usage configuration, you must provide a gemini api key !")
+    vim.schedule(function ()
+        
+        local configs = require('lspconfig.configs')
+        if user_config.use_gemini == true or user_config.use_omniprovider == true then
+            if user_config.api_key_gemini == nil then
+                error("For your usage configuration, you must provide a gemini api key !")
+            end
         end
-    end
 
-    if user_config.use_openrouter == true or user_config.use_omniprovider == true then
-        if user_config.api_key_openrouter == nil then
-            error("For your usage configuration, you must provide an openrouter api key ! ")
+        if user_config.use_openrouter == true or user_config.use_omniprovider == true then
+            if user_config.api_key_openrouter == nil then
+                error("For your usage configuration, you must provide an openrouter api key ! ")
+            end
         end
-    end
 
-    if user_config.use_groq == true or user_config.use_omniprovider == true then
-        if user_config.api_key_groq == nil then
-            error("For your useage configuration, you must provide an groq api key !")
+        if user_config.use_groq == true or user_config.use_omniprovider == true then
+            if user_config.api_key_groq == nil then
+                error("For your useage configuration, you must provide an groq api key !")
+            end
         end
-    end
 
-    M.config = {
-            cmd = user_config.cmd or default_config.cmd,
-            filetypes = user_config.filetypes or default_config.filetypes,
-            root_dir = user_config.root_dir or default_config.root_dir,
-            on_attach = user_config.on_attach or default_config.on_attach,
-            capabilities = user_config.capabilities or default_config.capabilities,
-            init_options = {},
-    }
-    local user_config_filled = vim.tbl_deep_extend("force", default_config, user_config)
-    local user_config_sanitised = user_config_filled
-
-    user_config_sanitised.root_dir = nil
-    user_config_sanitised.capabilities = nil
-
-    for key, value in pairs(user_config_sanitised) do
-        M.config.init_options[key] = value
-    end
-
-    -- Register the LSP server configuration
-    local lspconfig = require("lspconfig")
-
-    -- Define the server if not already defined
-    if not configs.ai_diagnos then
-        configs.ai_diagnos = {
-            default_config = {
-                cmd = M.config.cmd,
-                filetypes = M.config.filetypes,
-                root_dir = M.config.root_dir,
-                settings = {},
-                name = "ai-lsp",
-            },
+        M.config = {
+                cmd = user_config.cmd or default_config.cmd,
+                filetypes = user_config.filetypes or default_config.filetypes,
+                root_dir = user_config.root_dir or default_config.root_dir,
+                on_attach = user_config.on_attach or default_config.on_attach,
+                capabilities = user_config.capabilities or default_config.capabilities,
+                init_options = {},
         }
-    end
+        local user_config_filled = vim.tbl_deep_extend("force", default_config, user_config)
+        local user_config_sanitised = user_config_filled
 
-    -- Setup the LSP client
-    local success = pcall(function ()
+        user_config_sanitised.root_dir = nil
+        user_config_sanitised.capabilities = nil
+
+        for key, value in pairs(user_config_sanitised) do
+            M.config.init_options[key] = value
+        end
+
+        -- Register the LSP server configuration
+        local lspconfig = require("lspconfig")
+
+        -- Define the server if not already defined
+        if not configs.ai_diagnos then
+            configs.ai_diagnos = {
+                default_config = {
+                    cmd = M.config.cmd,
+                    filetypes = M.config.filetypes,
+                    root_dir = M.config.root_dir,
+                    settings = {},
+                    name = "ai-lsp",
+                },
+            }
+        end
+
+        -- Setup the LSP client
+        local success = pcall(function ()
+                local cmd_but_string = " "
+                for _, i in pairs(M.config.cmd) do
+                    cmd_but_string = cmd_but_string .. " " .. i
+                end
+                os.execute(cmd_but_string)
+            end
+        )
+        if success == true then
             lspconfig.ai_diagnos.setup({
                 name = "ai-lsp",
                 cmd = M.config.cmd,
@@ -172,98 +182,91 @@ function M.setup(user_config)
                 init_options = M.config.init_options,
             })
         end
-    )
-    if success ~= true then
-        local script_path = debug.getinfo(1, "S").source:sub(2)
-        local my_python = string.format("%s/../python3/.venv/bin/python", script_path)
-        lspconfig.ai_diagnos.setup({
-            cmd = string.format("%s -m ai_diagnos_lsp", my_python),
-            filetypes = M.config.filetypes,
-            root_dir = M.config.root_dir,
-            on_attach = M.config.on_attach,
-            capabilities = M.config.capabilities,
-            init_options = M.config.init_options,
-        })
-    end
 
-    vim.api.nvim_create_autocmd("LspAttach",{
-        callback=function (args)
-            local client = vim.lsp.get_client_by_id(args.data.client_id)
-            if client then
-                if client.name == "ai-lsp" then
-
-                    local ns = vim.lsp.diagnostic.get_namespace(client.id, true)
-                    vim.diagnostic.config({
-                        signs = {
-                            text = {
-                                [vim.diagnostic.severity.ERROR] = M.config.init_options.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.WARN]  = M.config.init_options.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.INFO]  = M.config.init_options.ai_diagnostics_symbol,
-                                [vim.diagnostic.severity.HINT]  = M.config.init_options.ai_diagnostics_symbol,
-                                -- TODO : Add more options on how to display the AI diagnostics
-                            },
-                        },
-                    }, ns)
-
-                    vim.api.nvim_create_user_command("AIAnalyse", function()
-                        local uri = vim.lsp.util.make_text_document_params().uri
-                        client:exec_cmd({
-                            title="Analyse the current buffer with AI, e.g. basic parse.",
-                            command="Analyse.Document",
-                            arguments={
-                                uri
-                            }
-                        })
-                    end, {})
-
-                    vim.api.nvim_create_user_command("AIClear", function ()
-                        local uri = vim.lsp.util.make_text_document_params().uri
-                        client:exec_cmd({
-                            title="Clear the AI diagnostics on the current buffer",
-                            command="Clear.AIDiagnostics",
-                            arguments={
-                                uri
-                            }
-                        })
-                    end, {})
-
-                    vim.api.nvim_create_user_command("AIClearAll", function ()
-                        client:exec_cmd({
-                            title="Clear ALL the AI diagnostics across all documents",
-                            command="Clear.AIDiagnostics.All",
-                        })
-                    end, {})
-
-                end
-            else
-                print(" No LSP client found ")
-            end
-
-
+        if success ~= true then
+            lspconfig.ai_diagnos.setup({
+                cmd = "../lsp/.venv/bin/python -m ai_diagnos_lsp",
+                filetypes = M.config.filetypes,
+                root_dir = M.config.root_dir,
+                on_attach = M.config.on_attach,
+                capabilities = M.config.capabilities,
+                init_options = M.config.init_options,
+            })
+            print("Overrode your custom cmd, due to the fact that it didnt work")
         end
-    })
+
+        vim.api.nvim_create_autocmd("LspAttach",{
+            callback=function (args)
+                local client = vim.lsp.get_client_by_id(args.data.client_id)
+                if client then
+                    if client.name == "ai-lsp" then
+
+                        local ns = vim.lsp.diagnostic.get_namespace(client.id, true)
+                        vim.diagnostic.config({
+                            signs = {
+                                text = {
+                                    [vim.diagnostic.severity.ERROR] = M.config.init_options.ai_diagnostics_symbol,
+                                    [vim.diagnostic.severity.WARN]  = M.config.init_options.ai_diagnostics_symbol,
+                                    [vim.diagnostic.severity.INFO]  = M.config.init_options.ai_diagnostics_symbol,
+                                    [vim.diagnostic.severity.HINT]  = M.config.init_options.ai_diagnostics_symbol,
+                                    -- TODO : Add more options on how to display the AI diagnostics
+                                },
+                            },
+                        }, ns)
+
+                        vim.api.nvim_create_user_command("AIAnalyse", function()
+                            local uri = vim.lsp.util.make_text_document_params().uri
+                            client:exec_cmd({
+                                title="Analyse the current buffer with AI, e.g. basic parse.",
+                                command="Analyse.Document",
+                                arguments={
+                                    uri
+                                }
+                            })
+                        end, {})
+
+                        vim.api.nvim_create_user_command("AIClear", function ()
+                            local uri = vim.lsp.util.make_text_document_params().uri
+                            client:exec_cmd({
+                                title="Clear the AI diagnostics on the current buffer",
+                                command="Clear.AIDiagnostics",
+                                arguments={
+                                    uri
+                                }
+                            })
+                        end, {})
+
+                        vim.api.nvim_create_user_command("AIClearAll", function ()
+                            client:exec_cmd({
+                                title="Clear ALL the AI diagnostics across all documents",
+                                command="Clear.AIDiagnostics.All",
+                            })
+                        end, {})
+
+                    end
+                else
+                    print(" No LSP client found ")
+                end
+        end
+        })
+    end)
 end
 
-function M.build()
-    local Job = require('plenary.job')
-    local script_path = debug.getinfo(1, "S").source:sub(2)
-    local my_python = string.format("%s/../python3/.venv/bin/python", script_path)
-    Job:new({
-        command=string.format("cd %s/../python3 && python -m venv venv", script_path),
-        on_exit=function ()
-            Job:new({
-                command=string.format("%s -m pip install -e %s/../python3/.", my_python, script_path),
-                on_exit=function ()
-                    print('Dependancies installed ! ')
-                end
-            })
-        end,
-        on_stderr=function()
-            print('failed at installing dependancies. ')
-            print(string.format("please go to %s and run 'python -m venv venv' and then run '.venv/bin/python -m pip install -e .'"))
-            print('On any issues, I am deeply sorry. Open an Issue on github. ')
+---@param use_uv boolean
+---@param install_to_venv boolean
+function M.build(use_uv, install_to_venv)
+    vim.schedule(function ()
+        if use_uv == true then
+            os.execute("cd ../lsp && uv venv && uv sync")
+        else
+            if install_to_venv == true then
+                print("creating a venv and installing the lsp there")
+                os.execute("cd ../lsp && python -m venv venv && .venv/bin/python -m pip install .")
+            end
+            print("installing the lsp without creating a venv")
+            os.execute("cd ../lsp && pip install .")
         end
-    })
+    end)
 end
 
 return M
