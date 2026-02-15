@@ -1,6 +1,111 @@
 local M = {}
 
+---@class AIDiagnosLSPConfig
+---
+---@field cmd string[]
+---@field filetypes string[]
+---@field root_dir function
+---@field on_attach function | nil
+---@field capabilities lsp.ClientCapabilities | nil
+---
+---@field timeout number
+---@field debounce_ms number
+---@field max_file_size number
+---@field show_progress boolean
+---@field show_progress_every_ms number
+---@field ai_diagnostics_symbol string
+---
+---@field use_omniprovider boolean
+---
+---@field use_gemini boolean
+---@field model_gemini string
+---@field fallback_models_gemini string[]
+---
+---@field use_openrouter boolean
+---@field model_openrouter string
+---
+---@field use_groq boolean
+---@field model_groq string
+---@field fallback_models_groq string[]
+---
+---@field AnalysisSubsystem table<"write" | "open" | "change" | "max_threads", string[] | number>
+
+---@type AIDiagnosLSPConfig
+local default_config = {
+    cmd = { 'ai-diagnos-lsp' },
+    filetypes = { 'python', 'go', 'lua' },
+    root_dir = require('lspconfig').util.root_pattern('.git'),
+    on_attach = nil,
+    capabilities = nil,
+
+    timeout = 99999,
+    debounce_ms = 3000,
+    max_file_size = 10000,
+    show_progress = true,
+    show_progress_every_ms = 5000,
+    ai_diagnostics_symbol = "AI",
+
+    use_omniprovider = true,
+
+    use_gemini = false,
+    model_gemini = "gemini-2.5-flash-lite",
+    fallback_models_gemini = {
+        "gemini-2.5-flash", "gemini-3-flash-preview", "gemini-2.5-pro"
+    },
+
+    use_openrouter = false,
+    model_openrouter = "tngtech/tng-r1t-chimera:free",
+
+    use_groq = false,
+    model_groq = "openai/gpt-oss-120b",
+    fallback_models_groq = {
+        "openai/gpt-oss-20b", "openai/gpt-oss-safeguard-20b", "qwen/qwen3-32b", "llama-3.3-70b-versatile"
+    },
+
+    AnalysisSubsystem = {
+        write = { "Basic" },
+        open = { "Basic_if_load_fails_else_false" },
+        change = {  },
+        max_threads = 5,
+    }
+}
+
+---@class user_config
+---
+---@field api_key_gemini string
+---@field api_key_openrouter string
+---@field api_key_groq string
+---
+---@field cmd string[]|nil
+---@field filetypes string[]|nil
+---@field root_dir function|nil
+---@field on_attach function | nil
+---@field capabilities lsp.ClientCapabilities | nil
+---
+---@field timeout number|nil
+---@field debounce_ms number|nil
+---@field max_file_size number|nil
+---@field show_progress boolean|nil
+---@field show_progress_every_ms number|nil
+---@field ai_diagnostics_symbol string|nil
+---
+---@field use_omniprovider boolean|nil
+---
+---@field use_gemini boolean|nil
+---@field model_gemini string|nil
+---@field fallback_models_gemini string[]|nil
+---
+---@field use_openrouter boolean|nil
+---@field model_openrouter string|nil
+---
+---@field use_groq boolean|nil
+---@field model_groq string|nil
+---@field fallback_models_groq string[]|nil
+---
+---@field AnalysisSubsystem table<"write" | "open" | "change" | "max_threads", string[] | number>|nil
+
 -- Setup function called by users in their config
+---@param user_config user_config
 function M.setup(user_config)
     local configs = require('lspconfig.configs')
     if user_config.use_gemini == true or user_config.use_omniprovider == true then
@@ -21,60 +126,6 @@ function M.setup(user_config)
         end
     end
 
-    local default_config = {
-        cmd = { 'ai-diagnos-lsp' },
-        filetypes = { 'python', 'go', 'lua' },
-        root_dir = require('lspconfig').util.root_pattern('.git'),
-        on_attach = nil,
-        capabilities = nil,
-        timeout = 99999,
-        model_openrouter = "tngtech/tng-r1t-chimera:free",
-        debounce_ms = 3000,
-        max_file_size = 10000,
-        show_progress = true,
-        show_progress_every_ms = 5000,
-        ai_diagnostics_symbol = "AI",
-        model_gemini = "gemini-2.5-flash-lite",
-        use_gemini = false,
-        use_openrouter = false,
-        use_omniprovider = true,
-        use_groq = false,
-        fallback_models_gemini = {
-            "gemini-2.5-flash", "gemini-3-flash-preview"
-        },
-        model_groq = "openai/gpt-oss-120b",
-        fallback_models_groq = {
-            "openai/gpt-oss-20b", "openai/gpt-oss-safeguard-20b", "qwen/qwen3-32b", "llama-3.3-70b-versatile"
-        }
-    }
---    M.config = {
---            cmd = user_config.cmd or default_config.cmd,
---            filetypes = user_config.filetypes or default_config.filetypes,
---            root_dir = user_config.root_dir or default_config.root_dir,
---            on_attach = user_config.on_attach or default_config.on_attach,
---            capabilities = user_config.capabilities or default_config.capabilities,
---            init_options = {
---                api_key_openrouter = user_config.api_key_openrouter,
---                api_key_gemini = user_config.api_key_gemini,
---                timeout = user_config.timeout or default_config.timeout,
---                model_openrouter = user_config.model_openrouter or default_config.model_openrouter,
---                debounce_ms = user_config.debounce_ms or default_config.debounce_ms,
---                max_file_size = user_config.max_file_size or default_config.max_file_size,
---                show_progress = user_config.show_progress or default_config.show_progress,
---                show_progress_every_ms = user_config.show_progress_every_ms or default_config.show_progress_every_ms,
---                ai_diagnostics_symbol = user_config.ai_diagnostics_symbol or default_config.ai_diagnostics_symbol,
---                model_gemini = user_config.model_gemini or default_config.model_gemini,
---                use_gemini = user_config.use_gemini or default_config.use_gemini,
---                use_openrouter = user_config.use_openrouter or default_config.use_openrouter,
---                use_omniprovider = user_config.use_omniprovider or default_config.use_omniprovider,
---                fallback_models_gemini = user_config.fallback_models_gemini or default_config.fallback_models_gemini,
---                api_key_groq = user_config.api_key_groq,
---                model_groq = user_config.model_groq or default_config.model_groq,
---                fallback_models_groq = user_config.fallback_models_groq or default_config.fallback_models_groq,
---                use_groq = user_config.use_groq or default_config.use_groq,
---            },
---        }
-
     M.config = {
             cmd = user_config.cmd or default_config.cmd,
             filetypes = user_config.filetypes or default_config.filetypes,
@@ -83,15 +134,19 @@ function M.setup(user_config)
             capabilities = user_config.capabilities or default_config.capabilities,
             init_options = {},
     }
-    user_config = vim.tbl_deep_extend("force", default_config, user_config)
-    local user_config_sanitised = user_config
+    local user_config_filled = vim.tbl_deep_extend("force", default_config, user_config)
+    local user_config_sanitised = user_config_filled
+
     user_config_sanitised.root_dir = nil
     user_config_sanitised.capabilities = nil
+
     for key, value in pairs(user_config_sanitised) do
         M.config.init_options[key] = value
     end
+
     -- Register the LSP server configuration
     local lspconfig = require("lspconfig")
+
     -- Define the server if not already defined
     if not configs.ai_diagnos then
         configs.ai_diagnos = {
