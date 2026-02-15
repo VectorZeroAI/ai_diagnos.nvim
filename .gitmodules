@@ -1,0 +1,4 @@
+[submodule "lsp"]
+	path = lsp
+	url = git@github.com:VectorZeroAI/ai-diagnos-lsp.git
+	branch = main
