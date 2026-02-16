@@ -168,9 +168,7 @@ function M.setup(user_config)
             cmd_but_string = cmd_but_string .. " " .. i
         end
 
-        vim.fn.jobstart(cmd_but_string, {
-            
-        })
+        vim.fn.jobstart(cmd_but_string)
 
         local config_cmd_works = true
 
