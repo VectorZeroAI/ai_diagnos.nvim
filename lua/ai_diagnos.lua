@@ -28,7 +28,7 @@ local M = {}
 ---@field model_groq string
 ---@field fallback_models_groq string[]
 ---
----@field AnalysisSubsystem table<"write" | "open" | "change" | "max_threads", string[] | number>
+---@field AnalysisSubsystem table<"write" | "open" | "change" | "command" | "max_threads", string[] | number>
 
 ---@type AIDiagnosLSPConfig
 local default_config = {
@@ -64,8 +64,9 @@ local default_config = {
 
     AnalysisSubsystem = {
         write = { "Basic" },
-        open = { "Basic_if_load_fails_else_false" },
+        open = { "Basic" },
         change = {  },
+        command = { "Basic" },
         max_threads = 5,
     }
 }
@@ -102,7 +103,7 @@ local default_config = {
 ---@field model_groq string|nil
 ---@field fallback_models_groq string[]|nil
 ---
----@field AnalysisSubsystem table<"write" | "open" | "change" | "max_threads", string[] | number>|nil
+---@field AnalysisSubsystem table<"write" | "open" | "change" | "command" | "max_threads", string[] | number> | nil
 
 -- Setup function called by users in their config
 ---@param user_config user_config
@@ -162,16 +163,19 @@ function M.setup(user_config)
             }
         end
 
+        local cmd_but_string = " "
+        for _, i in pairs(M.config.cmd) do
+            cmd_but_string = cmd_but_string .. " " .. i
+        end
+
+        vim.fn.jobstart(cmd_but_string, {
+            
+        })
+
+        local config_cmd_works = true
+
         -- Setup the LSP client
-        local success = pcall(function ()
-                local cmd_but_string = " "
-                for _, i in pairs(M.config.cmd) do
-                    cmd_but_string = cmd_but_string .. " " .. i
-                end
-                os.execute(cmd_but_string)
-            end
-        )
-        if success == true then
+        if config_cmd_works == true then
             lspconfig.ai_diagnos.setup({
                 name = "ai-lsp",
                 cmd = M.config.cmd,
@@ -183,7 +187,7 @@ function M.setup(user_config)
             })
         end
 
-        if success ~= true then
+        if config_cmd_works ~= true then
             lspconfig.ai_diagnos.setup({
                 cmd = "../lsp/.venv/bin/python -m ai_diagnos_lsp",
                 filetypes = M.config.filetypes,
