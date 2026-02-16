@@ -163,12 +163,7 @@ function M.setup(user_config)
             }
         end
 
-        local cmd_but_string = " "
-        for _, i in pairs(M.config.cmd) do
-            cmd_but_string = cmd_but_string .. " " .. i
-        end
-
-        vim.fn.jobstart(cmd_but_string)
+        -- TODO: IMPLEMENT THE ACTUAL CHECK. 
 
         local config_cmd_works = true
 
