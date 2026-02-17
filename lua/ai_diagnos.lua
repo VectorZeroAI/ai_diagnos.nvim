@@ -28,7 +28,28 @@ local M = {}
 ---@field model_groq string
 ---@field fallback_models_groq string[]
 ---
----@field AnalysisSubsystem table<"write" | "open" | "change" | "command" | "max_threads", string[] | number>
+---@field AnalysisSubsystem AnalysisSubsystem
+---
+---@field CrossFileAnalysis CrossFileAnalysis
+---
+
+---@alias analysisTypes "Basic" | "CrossFile" >| "Logic" | "Style" | "Security" | "Deep"
+--  TODO : UPDATE THOSE ONCE ANY OF THOSE ARE ACTUALLY DONE
+
+---@class AnalysisSubsystem
+---
+---@field write analysisTypes[]
+---@field open analysisTypes[]
+---@field change analysisTypes[]
+---@field command analysisTypes[]
+---
+---@field max_threads number | nil
+
+---@class CrossFileAnalysis
+---
+---@field scope string[]
+---@field max_analysis_depth number | nil
+---@field max_string_size_char number | nil
 
 ---@type AIDiagnosLSPConfig
 local default_config = {
@@ -63,11 +84,14 @@ local default_config = {
     },
 
     AnalysisSubsystem = {
-        write = { "Basic" },
-        open = { "Basic" },
+        write = { "CrossFile", "Basic" },
+        open = { "Basic", "CrossFile" },
         change = {  },
-        command = { "Basic" },
+        command = { "CrossFile" },
         max_threads = 5,
+    },
+    CrossFileAnalysis = {
+        scope = { "scope" },
     }
 }
 
@@ -103,7 +127,10 @@ local default_config = {
 ---@field model_groq string|nil
 ---@field fallback_models_groq string[]|nil
 ---
----@field AnalysisSubsystem table<"write" | "open" | "change" | "command" | "max_threads", string[] | number> | nil
+---@field AnalysisSubsystem AnalysisSubsystem
+---
+---@field CrossFileAnalysis CrossFileAnalysis
+---
 
 -- Setup function called by users in their config
 ---@param user_config user_config
