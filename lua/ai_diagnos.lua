@@ -127,9 +127,9 @@ local default_config = {
 ---@field model_groq string|nil
 ---@field fallback_models_groq string[]|nil
 ---
----@field AnalysisSubsystem AnalysisSubsystem
+---@field AnalysisSubsystem AnalysisSubsystem|nil
 ---
----@field CrossFileAnalysis CrossFileAnalysis
+---@field CrossFileAnalysis CrossFileAnalysis|nil
 ---
 
 -- Setup function called by users in their config
