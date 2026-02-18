@@ -216,9 +216,15 @@ function M.setup(user_config)
     end)
 end
 
----@param use_uv boolean
----@param install_to_venv boolean
+---@param use_uv boolean|nil
+---@param install_to_venv boolean|nil
 function M.build(use_uv, install_to_venv)
+    if use_uv == nil then
+        use_uv = false
+    end
+    if install_to_venv == nil then
+        install_to_venv = true
+    end
     vim.schedule(function ()
         if use_uv == true then
             os.execute("cd ../lsp && uv venv && uv sync")
