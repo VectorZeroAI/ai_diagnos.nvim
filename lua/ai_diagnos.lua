@@ -1,37 +1,12 @@
 local M = {}
 
----@class AIDiagnosLSPConfig
----
----@field cmd string[]
----@field filetypes string[]
----@field root_dir function
----@field on_attach function | nil
----@field capabilities lsp.ClientCapabilities | nil
----
----@field timeout number
----@field debounce_ms number
----@field max_file_size number
----@field show_progress boolean
----@field show_progress_every_ms number
----@field ai_diagnostics_symbol string
----
----@field use_omniprovider boolean
----
----@field use_gemini boolean
----@field model_gemini string
----@field fallback_models_gemini string[]
----
----@field use_openrouter boolean
----@field model_openrouter string
----
----@field use_groq boolean
----@field model_groq string
----@field fallback_models_groq string[]
----
----@field AnalysisSubsystem AnalysisSubsystem
----
----@field CrossFileAnalysis CrossFileAnalysis
----
+local default_config = {
+    cmd = { 'ai-diagnos-lsp' },
+    filetypes = { 'python', 'go', 'lua' },
+    root_dir = require('lspconfig').util.root_pattern('.git'),
+    on_attach = nil,
+    capabilities = nil,
+}
 
 ---@alias analysisTypes "Basic" | "CrossFile" >| "Logic" | "Style" | "Security" | "Deep"
 --  TODO : UPDATE THOSE ONCE ANY OF THOSE ARE ACTUALLY DONE
@@ -51,49 +26,13 @@ local M = {}
 ---@field max_analysis_depth number | nil
 ---@field max_string_size_char number | nil
 
----@type AIDiagnosLSPConfig
-local default_config = {
-    cmd = { 'ai-diagnos-lsp' },
-    filetypes = { 'python', 'go', 'lua' },
-    root_dir = require('lspconfig').util.root_pattern('.git'),
-    on_attach = nil,
-    capabilities = nil,
-
-    timeout = 99999,
-    debounce_ms = 3000,
-    max_file_size = 10000,
-    show_progress = true,
-    show_progress_every_ms = 5000,
-    ai_diagnostics_symbol = "AI",
-
-    use_omniprovider = true,
-
-    use_gemini = false,
-    model_gemini = "gemini-2.5-flash-lite",
-    fallback_models_gemini = {
-        "gemini-2.5-flash", "gemini-3-flash-preview", "gemini-2.5-pro"
-    },
-
-    use_openrouter = false,
-    model_openrouter = "tngtech/tng-r1t-chimera:free",
-
-    use_groq = false,
-    model_groq = "openai/gpt-oss-120b",
-    fallback_models_groq = {
-        "openai/gpt-oss-20b", "openai/gpt-oss-safeguard-20b", "qwen/qwen3-32b", "llama-3.3-70b-versatile"
-    },
-
-    AnalysisSubsystem = {
-        write = { "CrossFile", "Basic" },
-        open = { "Basic", "CrossFile" },
-        change = {  },
-        command = { "CrossFile" },
-        max_threads = 5,
-    },
-    CrossFileAnalysis = {
-        scope = { "scope" },
-    }
-}
+---@class DiagnosticsSubsystem
+---
+---@field sqlite_db_name string
+---@field ttl_until_invalidation number
+---@field ttl_until_deletion number
+---@field check_ttl_for_deletion number
+---@field check_ttl_for_invalidation number
 
 ---@class user_config
 ---
@@ -131,6 +70,7 @@ local default_config = {
 ---
 ---@field CrossFileAnalysis CrossFileAnalysis|nil
 ---
+---@field DiagnosticsSubsystem DiagnosticsSubsystem|nil
 
 -- Setup function called by users in their config
 ---@param user_config user_config
