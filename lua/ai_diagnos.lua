@@ -6,6 +6,7 @@ local default_config = {
     root_dir = require('lspconfig').util.root_pattern('.git'),
     on_attach = nil,
     capabilities = nil,
+    ai_diagnostics_symbol = "AI"
 }
 
 ---@alias analysisTypes "Basic" | "CrossFile" >| "Logic" | "Style" | "Security" | "Deep"
