@@ -9,7 +9,8 @@ local default_config = {
     ai_diagnostics_symbol = "AI"
 }
 
----@alias analysisTypes "Basic" | "CrossFile" >| "Logic" | "Style" | "Security" | "Deep"
+ 
+---@alias analysisTypes "Basic" | "CrossFile" | "BasicLogic" | "CrossFileLogic" | "BasicStyle" | "CrossFileStyle" >| "Deep"
 --  TODO : UPDATE THOSE ONCE ANY OF THOSE ARE ACTUALLY DONE
 
 ---@class AnalysisSubsystem
@@ -37,9 +38,13 @@ local default_config = {
 
 ---@class user_config
 ---
----@field api_key_gemini string
----@field api_key_openrouter string
----@field api_key_groq string
+---@field api_key_gemini string |nil
+---@field api_key_openrouter string |nil
+---@field api_key_groq string |nil
+---@field api_key_cerebras string |nil
+---@field api_key_huggingface string |nil
+---@field api_key_openai string |nil
+---@field api_key_claude string |nil
 ---
 ---@field cmd string[]|nil
 ---@field filetypes string[]|nil
@@ -54,24 +59,30 @@ local default_config = {
 ---@field show_progress_every_ms number|nil
 ---@field ai_diagnostics_symbol string|nil
 ---
----@field use_omniprovider boolean|nil
+---@field use "Openrouter" | "Omniprovider" | "Claude" | "OpenAI" | "gemini" | "groq" | "cerebras" | "huggingface"| nil
 ---
----@field use_gemini boolean|nil
 ---@field model_gemini string|nil
 ---@field fallback_models_gemini string[]|nil
 ---
----@field use_openrouter boolean|nil
 ---@field model_openrouter string|nil
 ---
----@field use_groq boolean|nil
 ---@field model_groq string|nil
 ---@field fallback_models_groq string[]|nil
 ---
+---@field model_cerebras string|nil
+---@field fallback_models_cerebras string[]|nil
+---@field model_huggingface string|nil
+---@field model_openai string|nil
+---@field model_claude string|nil
 ---@field AnalysisSubsystem AnalysisSubsystem|nil
 ---
 ---@field CrossFileAnalysis CrossFileAnalysis|nil
 ---
 ---@field DiagnosticsSubsystem DiagnosticsSubsystem|nil
+---
+---
+---@field plugin_parsers table<string, string>
+---@field prompt_overrides table<string, string>
 
 -- Setup function called by users in their config
 ---@param user_config user_config
@@ -79,23 +90,6 @@ function M.setup(user_config)
     vim.schedule(function ()
         
         local configs = require('lspconfig.configs')
-        if user_config.use_gemini == true or user_config.use_omniprovider == true then
-            if user_config.api_key_gemini == nil then
-                error("For your usage configuration, you must provide a gemini api key !")
-            end
-        end
-
-        if user_config.use_openrouter == true or user_config.use_omniprovider == true then
-            if user_config.api_key_openrouter == nil then
-                error("For your usage configuration, you must provide an openrouter api key ! ")
-            end
-        end
-
-        if user_config.use_groq == true or user_config.use_omniprovider == true then
-            if user_config.api_key_groq == nil then
-                error("For your useage configuration, you must provide an groq api key !")
-            end
-        end
 
         M.config = {
                 cmd = user_config.cmd or default_config.cmd,
@@ -228,7 +222,11 @@ function M.build(use_uv, install_to_venv)
     end
     vim.schedule(function ()
         if use_uv == true then
-            os.execute("cd ../lsp && uv venv && uv sync")
+            if install_to_venv == false then
+                os.execute("cd ../lsp && uv sync --active")
+            else
+                os.execute("cd ../lsp && uv venv && uv sync")
+            end
         else
             if install_to_venv == true then
                 print("creating a venv and installing the lsp there")
